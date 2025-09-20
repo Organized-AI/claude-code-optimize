@@ -1,0 +1,95 @@
+# Integration Endpoints Configuration
+# Defines external service endpoints and integration settings
+
+integrations:
+  # Calendar Services
+  calendar:
+    google:
+      api_url: "https://www.googleapis.com/calendar/v3"
+      auth_endpoint: "https://accounts.google.com/o/oauth2/auth"
+      token_endpoint: "https://oauth2.googleapis.com/token"
+      scopes:
+        - "https://www.googleapis.com/auth/calendar"
+        - "https://www.googleapis.com/auth/calendar.events"
+    
+    outlook:
+      api_url: "https://graph.microsoft.com/v1.0"
+      auth_endpoint: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
+      token_endpoint: "https://login.microsoftonline.com/common/oauth2/v2.0/token"
+      scopes:
+        - "https://graph.microsoft.com/calendars.readwrite"
+  
+  # Notification Services
+  notifications:
+    slack:
+      webhook_url: "https://hooks.slack.com/services/"
+      api_url: "https://slack.com/api"
+      
+    discord:
+      webhook_url: "https://discord.com/api/webhooks/"
+      api_url: "https://discord.com/api"
+      
+    email:
+      smtp_server: "smtp.gmail.com"
+      smtp_port: 587
+      use_tls: true
+  
+  # Storage Services
+  storage:
+    dropbox:
+      api_url: "https://api.dropboxapi.com/2"
+      content_url: "https://content.dropboxapi.com/2"
+      
+    google_drive:
+      api_url: "https://www.googleapis.com/drive/v3"
+      upload_url: "https://www.googleapis.com/upload/drive/v3"
+
+# Webhook Configuration
+webhooks:
+  endpoints:
+    session_events:
+      url: "https://your-domain.com/webhooks/sessions"
+      events:
+        - "session_start"
+        - "session_end"
+        - "session_error"
+      
+    performance_alerts:
+      url: "https://your-domain.com/webhooks/performance"
+      events:
+        - "performance_alert"
+        - "resource_limit_exceeded"
+  
+  settings:
+    timeout: 10
+    retry_attempts: 3
+    retry_delay: 2.0
+    max_payload_size: 1048576  # 1MB
+
+# API Rate Limits
+rate_limits:
+  google_calendar:
+    requests_per_second: 10
+    requests_per_day: 1000000
+    
+  slack:
+    requests_per_second: 1
+    requests_per_minute: 50
+    
+  default:
+    requests_per_second: 5
+    requests_per_minute: 100
+
+# Security Settings
+security:
+  webhook_secrets:
+    use_signatures: true
+    algorithm: "sha256"
+    
+  api_keys:
+    rotation_interval_days: 90
+    encryption: true
+    
+  oauth:
+    state_verification: true
+    pkce_enabled: true

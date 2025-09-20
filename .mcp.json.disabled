@@ -1,0 +1,34 @@
+{
+  "hooks": [
+    {
+      "name": "token-rate-monitor",
+      "matcher": ".*",
+      "when": "PreToolUse",
+      "command": "./hooks/pre-tool-monitor.sh"
+    },
+    {
+      "name": "token-rate-check",
+      "matcher": ".*", 
+      "when": "PostToolUse",
+      "command": "./hooks/post-tool-check.sh"
+    },
+    {
+      "name": "session-notifications",
+      "matcher": ".*",
+      "when": "Notification",
+      "command": "./hooks/notification-handler.sh"
+    },
+    {
+      "name": "session-cleanup",
+      "matcher": ".*",
+      "when": "Stop",
+      "command": "./hooks/session-stop.sh"
+    },
+    {
+      "name": "dashboard-disconnection-alert",
+      "matcher": ".*",
+      "when": "PreToolUse",
+      "command": "./hooks/dashboard-monitor-final.sh monitor"
+    }
+  ]
+}

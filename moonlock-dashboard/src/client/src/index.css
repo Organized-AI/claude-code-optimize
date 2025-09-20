@@ -1,0 +1,155 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Grid animations */
+@keyframes gridFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.grid-item {
+  animation: gridFadeIn 0.3s ease-out;
+}
+
+/* Metric cards */
+.metric-card {
+  @apply bg-dark-800 border border-dark-700 rounded-lg p-4 hover:border-moonlock-600 transition-all duration-200;
+}
+
+.metric-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.1);
+}
+
+/* Progress bars */
+.progress-bar {
+  @apply bg-dark-700 rounded-full overflow-hidden;
+}
+
+.progress-fill {
+  @apply h-full transition-all duration-300 ease-out;
+}
+
+/* Status indicators */
+.status-active {
+  @apply text-green-400 bg-green-400/10;
+}
+
+.status-paused {
+  @apply text-yellow-400 bg-yellow-400/10;
+}
+
+.status-completed {
+  @apply text-blue-400 bg-blue-400/10;
+}
+
+/* Timer display */
+.timer-display {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Chart container */
+.chart-container {
+  position: relative;
+  height: 200px;
+}
+
+/* Alerts */
+.alert-warning {
+  @apply bg-yellow-500/10 border-yellow-500/20 text-yellow-300;
+}
+
+.alert-error {
+  @apply bg-red-500/10 border-red-500/20 text-red-300;
+}
+
+/* Moonlock branding */
+.moonlock-gradient {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);
+}
+
+.moonlock-text-gradient {
+  background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glassmorphism effects */
+.glass {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+/* Loading states */
+.skeleton {
+  @apply bg-dark-700 animate-pulse rounded;
+}
+
+/* Custom utilities */
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.border-glow {
+  box-shadow: 0 0 10px rgba(14, 165, 233, 0.3);
+}
+
+/* Dark mode optimizations */
+.dark {
+  color-scheme: dark;
+}
+
+/* Particle float animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+  }
+  33% {
+    transform: translateY(-20px) translateX(10px);
+  }
+  66% {
+    transform: translateY(10px) translateX(-10px);
+  }
+}
+
+.animate-float {
+  animation: float infinite ease-in-out;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

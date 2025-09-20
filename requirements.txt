@@ -1,0 +1,39 @@
+# Core dependencies for Claude Code Optimizer Precision System
+psutil>=5.9.0           # System and process monitoring
+watchdog>=3.0.0         # File system event monitoring  
+requests>=2.28.0        # HTTP client for API calls
+plyer>=2.1.0            # Cross-platform system notifications
+httpx>=0.24.0           # Async HTTP client for push notifications
+
+# CLI and configuration
+click>=8.0.0            # CLI framework
+pyyaml>=6.0             # YAML configuration handling
+python-dateutil>=2.8.0  # Date/time utilities
+typer>=0.9.0            # Modern CLI framework
+
+# Calendar integration
+google-auth>=2.0.0
+google-auth-oauthlib>=1.0.0
+google-auth-httplib2>=0.1.0
+google-api-python-client>=2.0.0
+icalendar>=4.0.0
+
+# Code analysis
+gitpython>=3.1.0        # Git repository analysis
+pathspec>=0.10.0        # Pattern matching for files
+
+# Audio and display
+pygame>=2.5.0           # Cross-platform audio playback
+rich>=13.0.0            # Enhanced console output for debugging
+
+# Optional dependencies  
+pyttsx3>=2.90           # Text-to-speech fallback
+
+# Data handling
+pandas>=1.5.0           # Data analysis (for token metrics)
+numpy>=1.24.0           # Numerical computing
+
+# Development and testing
+pytest>=7.0.0           # Testing framework
+black>=22.0.0           # Code formatting
+flake8>=5.0.0           # Code linting

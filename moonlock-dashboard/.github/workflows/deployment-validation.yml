@@ -1,0 +1,402 @@
+name: Deployment Validation Pipeline
+
+on:
+  deployment_status:
+  workflow_run:
+    workflows: ["Deploy to Production"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to validate'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+          - preview
+      url:
+        description: 'URL to validate (optional)'
+        required: false
+        type: string
+
+env:
+  NODE_VERSION: '18'
+  CI: true
+
+jobs:
+  # Validate deployment
+  validate-deployment:
+    name: Validate Deployment
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Determine target URL
+      id: url
+      run: |
+        if [[ -n "${{ github.event.inputs.url }}" ]]; then
+          echo "target_url=${{ github.event.inputs.url }}" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.event.inputs.environment }}" == "production" ]]; then
+          # Replace with your actual production URL
+          echo "target_url=https://your-production-site.vercel.app" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.event.inputs.environment }}" == "staging" ]]; then
+          # Replace with your actual staging URL
+          echo "target_url=https://your-staging-site.vercel.app" >> $GITHUB_OUTPUT
+        else
+          # Default to preview URL from deployment context
+          echo "target_url=${{ github.event.deployment_status.target_url }}" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Wait for deployment to be ready
+      run: |
+        TARGET_URL="${{ steps.url.outputs.target_url }}"
+        echo "Waiting for deployment at: $TARGET_URL"
+        
+        MAX_ATTEMPTS=30
+        ATTEMPT=1
+        
+        while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+          echo "Attempt $ATTEMPT/$MAX_ATTEMPTS - checking if deployment is ready..."
+          
+          if curl -f -s --max-time 10 "$TARGET_URL" > /dev/null 2>&1; then
+            echo "✅ Deployment is ready!"
+            break
+          fi
+          
+          if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+            echo "❌ Deployment not ready after $MAX_ATTEMPTS attempts"
+            exit 1
+          fi
+          
+          echo "⏳ Deployment not ready, waiting 10 seconds..."
+          sleep 10
+          ATTEMPT=$((ATTEMPT + 1))
+        done
+        
+    - name: Run deployment validation
+      run: |
+        chmod +x scripts/test-deployment.sh
+        ./scripts/test-deployment.sh production "${{ steps.url.outputs.target_url }}"
+        
+    - name: Upload validation results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: deployment-validation-results
+        path: test-reports/
+        retention-days: 30
+
+  # Run smoke tests on deployment
+  smoke-tests:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    needs: validate-deployment
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Install Playwright browsers
+      run: npx playwright install chromium
+      
+    - name: Determine target URL
+      id: url
+      run: |
+        if [[ -n "${{ github.event.inputs.url }}" ]]; then
+          echo "target_url=${{ github.event.inputs.url }}" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.event.inputs.environment }}" == "production" ]]; then
+          echo "target_url=https://your-production-site.vercel.app" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.event.inputs.environment }}" == "staging" ]]; then
+          echo "target_url=https://your-staging-site.vercel.app" >> $GITHUB_OUTPUT
+        else
+          echo "target_url=${{ github.event.deployment_status.target_url }}" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Run smoke tests
+      run: |
+        # Run a subset of E2E tests as smoke tests
+        npm run test:e2e -- --project=chromium --grep="should load dashboard with all main components|should display session timer correctly" --reporter=json
+      env:
+        BASE_URL: ${{ steps.url.outputs.target_url }}
+        
+    - name: Upload smoke test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: smoke-test-results
+        path: |
+          test-results/
+          test-reports/
+        retention-days: 30
+
+  # Performance validation on deployment
+  performance-validation:
+    name: Performance Validation
+    runs-on: ubuntu-latest
+    needs: validate-deployment
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Install performance tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y apache2-utils
+        
+    - name: Determine target URL
+      id: url
+      run: |
+        if [[ -n "${{ github.event.inputs.url }}" ]]; then
+          echo "target_url=${{ github.event.inputs.url }}" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.event.inputs.environment }}" == "production" ]]; then
+          echo "target_url=https://your-production-site.vercel.app" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.event.inputs.environment }}" == "staging" ]]; then
+          echo "target_url=https://your-staging-site.vercel.app" >> $GITHUB_OUTPUT
+        else
+          echo "target_url=${{ github.event.deployment_status.target_url }}" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Run performance validation
+      run: |
+        chmod +x scripts/performance-benchmark.sh
+        ./scripts/performance-benchmark.sh "${{ steps.url.outputs.target_url }}"
+      env:
+        LOAD_TIME_THRESHOLD_MS: 5000  # More lenient for production
+        CONCURRENT_USERS: 5
+        DURATION_SECONDS: 30
+        
+    - name: Upload performance results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-validation-results
+        path: test-reports/performance/
+        retention-days: 30
+
+  # Security validation
+  security-validation:
+    name: Security Validation
+    runs-on: ubuntu-latest
+    needs: validate-deployment
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Determine target URL
+      id: url
+      run: |
+        if [[ -n "${{ github.event.inputs.url }}" ]]; then
+          echo "target_url=${{ github.event.inputs.url }}" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.event.inputs.environment }}" == "production" ]]; then
+          echo "target_url=https://your-production-site.vercel.app" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.event.inputs.environment }}" == "staging" ]]; then
+          echo "target_url=https://your-staging-site.vercel.app" >> $GITHUB_OUTPUT
+        else
+          echo "target_url=${{ github.event.deployment_status.target_url }}" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Security headers check
+      run: |
+        TARGET_URL="${{ steps.url.outputs.target_url }}"
+        echo "Checking security headers for: $TARGET_URL"
+        
+        # Get headers
+        curl -I -s "$TARGET_URL" > headers.txt
+        
+        echo "=== Response Headers ===" 
+        cat headers.txt
+        echo ""
+        
+        # Check for security headers
+        SECURITY_SCORE=0
+        TOTAL_CHECKS=5
+        
+        if grep -i "X-Content-Type-Options" headers.txt; then
+          echo "✅ X-Content-Type-Options header found"
+          SECURITY_SCORE=$((SECURITY_SCORE + 1))
+        else
+          echo "❌ X-Content-Type-Options header missing"
+        fi
+        
+        if grep -i "X-Frame-Options\|Content-Security-Policy.*frame-ancestors" headers.txt; then
+          echo "✅ Frame protection found"
+          SECURITY_SCORE=$((SECURITY_SCORE + 1))
+        else
+          echo "❌ Frame protection missing"
+        fi
+        
+        if grep -i "X-XSS-Protection\|Content-Security-Policy" headers.txt; then
+          echo "✅ XSS protection found"
+          SECURITY_SCORE=$((SECURITY_SCORE + 1))
+        else
+          echo "❌ XSS protection missing"
+        fi
+        
+        if grep -i "Strict-Transport-Security" headers.txt; then
+          echo "✅ HSTS header found"
+          SECURITY_SCORE=$((SECURITY_SCORE + 1))
+        else
+          echo "❌ HSTS header missing"
+        fi
+        
+        if grep -i "Content-Security-Policy" headers.txt; then
+          echo "✅ CSP header found"
+          SECURITY_SCORE=$((SECURITY_SCORE + 1))
+        else
+          echo "❌ CSP header missing"
+        fi
+        
+        SECURITY_PERCENTAGE=$((SECURITY_SCORE * 100 / TOTAL_CHECKS))
+        echo ""
+        echo "Security Score: $SECURITY_SCORE/$TOTAL_CHECKS ($SECURITY_PERCENTAGE%)"
+        
+        if [ $SECURITY_PERCENTAGE -lt 60 ]; then
+          echo "⚠️ Security score is below 60% - consider adding more security headers"
+          exit 1
+        else
+          echo "✅ Security headers validation passed"
+        fi
+        
+    - name: SSL/TLS check
+      run: |
+        TARGET_URL="${{ steps.url.outputs.target_url }}"
+        
+        if [[ "$TARGET_URL" == https://* ]]; then
+          echo "Checking SSL/TLS configuration..."
+          
+          # Basic SSL check
+          if curl -I -s --max-time 10 "$TARGET_URL" | grep -q "HTTP/[12] 200"; then
+            echo "✅ HTTPS connection successful"
+          else
+            echo "❌ HTTPS connection failed"
+            exit 1
+          fi
+          
+          # Check SSL certificate
+          HOST=$(echo "$TARGET_URL" | sed 's/https:\/\///' | sed 's/\/.*//')
+          if echo | openssl s_client -connect "$HOST:443" -servername "$HOST" 2>/dev/null | openssl x509 -noout -dates; then
+            echo "✅ SSL certificate is valid"
+          else
+            echo "⚠️ Could not verify SSL certificate"
+          fi
+        else
+          echo "⚠️ Site is not using HTTPS"
+        fi
+
+  # Generate deployment report
+  deployment-report:
+    name: Generate Deployment Report
+    runs-on: ubuntu-latest
+    needs: [validate-deployment, smoke-tests, performance-validation, security-validation]
+    if: always()
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: deployment-results/
+        
+    - name: Generate deployment report
+      run: |
+        echo "# 🚀 Deployment Validation Report" > deployment-report.md
+        echo "" >> deployment-report.md
+        echo "**Environment:** ${{ github.event.inputs.environment || 'auto-detected' }}" >> deployment-report.md
+        echo "**URL:** ${{ github.event.inputs.url || github.event.deployment_status.target_url }}" >> deployment-report.md
+        echo "**Trigger:** ${{ github.event_name }}" >> deployment-report.md
+        echo "**Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> deployment-report.md
+        echo "" >> deployment-report.md
+        
+        echo "## 📊 Validation Results" >> deployment-report.md
+        echo "" >> deployment-report.md
+        
+        # Check job results
+        if [[ "${{ needs.validate-deployment.result }}" == "success" ]]; then
+          echo "✅ **Deployment Validation:** Passed" >> deployment-report.md
+        else
+          echo "❌ **Deployment Validation:** Failed" >> deployment-report.md
+        fi
+        
+        if [[ "${{ needs.smoke-tests.result }}" == "success" ]]; then
+          echo "✅ **Smoke Tests:** Passed" >> deployment-report.md
+        elif [[ "${{ needs.smoke-tests.result }}" == "skipped" ]]; then
+          echo "⏭️ **Smoke Tests:** Skipped" >> deployment-report.md
+        else
+          echo "❌ **Smoke Tests:** Failed" >> deployment-report.md
+        fi
+        
+        if [[ "${{ needs.performance-validation.result }}" == "success" ]]; then
+          echo "✅ **Performance Validation:** Passed" >> deployment-report.md
+        elif [[ "${{ needs.performance-validation.result }}" == "skipped" ]]; then
+          echo "⏭️ **Performance Validation:** Skipped" >> deployment-report.md
+        else
+          echo "❌ **Performance Validation:** Failed" >> deployment-report.md
+        fi
+        
+        if [[ "${{ needs.security-validation.result }}" == "success" ]]; then
+          echo "✅ **Security Validation:** Passed" >> deployment-report.md
+        elif [[ "${{ needs.security-validation.result }}" == "skipped" ]]; then
+          echo "⏭️ **Security Validation:** Skipped" >> deployment-report.md
+        else
+          echo "❌ **Security Validation:** Failed" >> deployment-report.md
+        fi
+        
+        echo "" >> deployment-report.md
+        
+        # Overall status
+        if [[ "${{ needs.validate-deployment.result }}" == "success" && 
+              ("${{ needs.smoke-tests.result }}" == "success" || "${{ needs.smoke-tests.result }}" == "skipped") &&
+              ("${{ needs.performance-validation.result }}" == "success" || "${{ needs.performance-validation.result }}" == "skipped") &&
+              ("${{ needs.security-validation.result }}" == "success" || "${{ needs.security-validation.result }}" == "skipped") ]]; then
+          echo "## ✅ Deployment Validation: **PASSED**" >> deployment-report.md
+          echo "" >> deployment-report.md
+          echo "The deployment has been validated and is ready for use." >> deployment-report.md
+        else
+          echo "## ❌ Deployment Validation: **FAILED**" >> deployment-report.md
+          echo "" >> deployment-report.md
+          echo "The deployment validation failed. Please review the results and fix any issues." >> deployment-report.md
+        fi
+        
+        cat deployment-report.md
+        
+    - name: Upload deployment report
+      uses: actions/upload-artifact@v4
+      with:
+        name: deployment-validation-report
+        path: deployment-report.md
+        retention-days: 90

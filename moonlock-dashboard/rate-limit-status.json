@@ -1,0 +1,55 @@
+{
+  "plan_type": "max_5x",
+  "plan_name": "Max 5x Pro ($100/month)",
+  "five_hour_block": {
+    "period_start": "2025-08-14T15:00:00",
+    "period_end": "2025-08-14T20:00:00",
+    "total_tokens": 0,
+    "total_prompts": 0,
+    "weighted_prompts": 0,
+    "usage_percentage": 0.0,
+    "token_percentage": 0.0,
+    "prompt_percentage": 0.0,
+    "sessions_count": 0,
+    "model_breakdown": {},
+    "limits": {
+      "max_prompts": 150,
+      "max_tokens": 300000,
+      "sonnet_weight": 1.0,
+      "opus_weight": 2.5
+    },
+    "time_remaining_minutes": 168,
+    "status": "safe"
+  },
+  "weekly_limit": {
+    "period_start": "2025-08-11T00:00:00",
+    "period_end": "2025-08-18T00:00:00",
+    "total_tokens": 1304152,
+    "total_sessions": 1,
+    "total_prompts": 356,
+    "usage_percentage": 65.2076,
+    "token_percentage": 65.2076,
+    "session_percentage": 0.1,
+    "model_breakdown": {
+      "sonnet": 356,
+      "opus": 0
+    },
+    "daily_breakdown": {
+      "2025-08-14": {
+        "tokens": 1304152,
+        "prompts": 356,
+        "sessions": 1
+      }
+    },
+    "limits": {
+      "max_prompts": 1000,
+      "max_tokens": 2000000,
+      "sonnet_hours": 280,
+      "opus_hours": 35
+    },
+    "days_remaining": 4,
+    "status": "safe"
+  },
+  "last_updated": "2025-08-14T17:11:28.659013",
+  "overall_status": "safe"
+}

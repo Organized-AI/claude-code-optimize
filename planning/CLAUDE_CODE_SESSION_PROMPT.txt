@@ -1,0 +1,216 @@
+# Claude Code Session Prompt: Enhanced Dashboard with SDK Integration
+
+## SESSION OVERVIEW
+You are implementing a production-ready Claude Code Optimizer Dashboard with full SDK integration. This session will build the enhanced dashboard component with "Start Session" and "Plan" button functionality, real-time monitoring, and session state management.
+
+## PROJECT CONTEXT
+- **Current Dashboard**: moonlock-dashboard.tsx with basic system monitoring
+- **Target**: Enhanced Claude Code command center with SDK integration
+- **Location**: /Users/jordaaan/Library/Mobile Documents/com~apple~CloudDocs/BHT Promo iCloud/Organized AI/Windsurf/Claude Code Optimizer
+- **Token Budget**: 80-100 prompts for this session
+- **Model Strategy**: 75% Sonnet 4, 25% Opus 4
+
+## CURRENT STATE ANALYSIS
+The existing moonlock-dashboard.tsx contains:
+- React components with particle effects and glass UI
+- System health monitoring (CPU, memory, storage)
+- Device connection status
+- Basic dashboard structure ready for enhancement
+
+## YOUR MISSION: BUILD CLAUDE CODE SDK INTEGRATION
+
+### 1. ENHANCED DASHBOARD COMPONENT (25-30 prompts)
+Replace the existing moonlock-dashboard.tsx with the enhanced version that includes:
+
+**Three Intelligent States**:
+- **Waiting State**: Shows "Waiting for Active Session" with session history
+- **Active State**: Real-time session monitoring with progress tracking
+- **Planning State**: Project analysis and session planning interface
+
+**Key Features to Implement**:
+- Weekly quota visualization (Sonnet 4: X/480h, Opus 4: X/40h)
+- Clickable session history with detailed metrics
+- "Start Session" button that integrates with Claude Code SDK
+- "Plan" button for project complexity analysis
+- Real-time session monitoring with token usage
+
+### 2. CLAUDE CODE SDK INTEGRATION (20-25 prompts)
+Create a ClaudeCodeService.ts file that provides:
+
+```typescript
+class ClaudeCodeService {
+  // Start a new Claude Code session
+  async startSession(config: SessionConfig): Promise<Session>
+  
+  // Analyze project complexity and generate plan
+  async planProject(projectPath: string): Promise<ProjectPlan>
+  
+  // Monitor active session in real-time
+  async monitorSession(sessionId: string): Promise<SessionStatus>
+  
+  // Get current weekly quota usage
+  async getWeeklyQuota(): Promise<QuotaStatus>
+}
+
+interface SessionConfig {
+  projectPath: string;
+  sessionType: 'planning' | 'implementation' | 'testing' | 'optimization';
+  tokenBudget: number;
+  model: 'sonnet-4' | 'opus-4';
+  maxDuration: number; // 5 hours max
+}
+```
+
+### 3. SESSION STATE MANAGEMENT (15-20 prompts)
+Implement React state management for:
+- Current active session tracking
+- Session history persistence
+- Weekly quota monitoring
+- Real-time progress updates
+- Error handling and recovery
+
+### 4. PROJECT PLANNING SYSTEM (15-20 prompts)
+Build intelligent project analysis:
+- Codebase complexity scoring (1-10 scale)
+- Estimated session count and duration
+- Optimal model selection (Sonnet vs Opus)
+- Session type recommendations
+- Risk factor identification
+
+### 5. TESTING & INTEGRATION (10-15 prompts)
+Ensure robust implementation:
+- Error boundaries and fallback states
+- Loading states and user feedback
+- Session recovery mechanisms
+- Cross-platform compatibility
+
+## TECHNICAL REQUIREMENTS
+
+### **File Structure to Create/Update**:
+```
+Claude Code Optimizer/
+├── moonlock-dashboard.tsx                    # Enhanced dashboard (UPDATE)
+├── services/
+│   ├── ClaudeCodeService.ts                 # SDK integration (NEW)
+│   ├── ProjectAnalyzer.ts                   # Complexity analysis (NEW)
+│   └── StorageService.ts                    # Data persistence (NEW)
+├── types/
+│   ├── Session.ts                           # Session types (NEW)
+│   ├── Project.ts                           # Project types (NEW)
+│   └── Quota.ts                             # Quota types (NEW)
+└── utils/
+    ├── tokenCalculator.ts                   # Token calculations (NEW)
+    └── sessionOptimizer.ts                  # Session optimization (NEW)
+```
+
+### **Key Integration Points**:
+1. **"Start Session" Button**: 
+   - Shows session configuration dialog
+   - Validates weekly quota availability
+   - Creates new Claude Code session via SDK
+   - Transitions dashboard to active monitoring state
+
+2. **"Plan" Button**:
+   - Prompts for project directory selection
+   - Analyzes codebase complexity using Claude
+   - Generates optimized session plan
+   - Creates calendar events for planned sessions
+
+3. **Real-time Monitoring**:
+   - WebSocket or polling connection to Claude Code process
+   - Live token usage tracking
+   - Progress bars and efficiency metrics
+   - Session completion alerts
+
+### **State Management Structure**:
+```typescript
+interface DashboardState {
+  currentSession: Session | null;
+  sessionHistory: Session[];
+  weeklyQuota: {
+    sonnet: { used: number; total: 480 };
+    opus: { used: number; total: 40 };
+  };
+  projectAnalysis: ProjectAnalysis | null;
+  isLoading: boolean;
+  error: string | null;
+}
+```
+
+## WEEKLY QUOTA INTEGRATION
+**Critical Requirement**: Never allow sessions that would exceed weekly limits.
+
+### **Quota Validation Logic**:
+```typescript
+async validateSessionStart(config: SessionConfig): Promise<{
+  allowed: boolean;
+  reason?: string;
+  alternatives?: SessionConfig[];
+}> {
+  const currentUsage = await this.getWeeklyQuota();
+  const estimatedUsage = this.estimateSessionUsage(config);
+  
+  // 90% safety margin to prevent overruns
+  const safeLimit = {
+    sonnet: currentUsage.sonnet.total * 0.9,
+    opus: currentUsage.opus.total * 0.9
+  };
+  
+  return {
+    allowed: (currentUsage.sonnet.used + estimatedUsage.sonnet) < safeLimit.sonnet &&
+             (currentUsage.opus.used + estimatedUsage.opus) < safeLimit.opus,
+    reason: "Would exceed weekly quota limits",
+    alternatives: this.generateAlternatives(config, currentUsage)
+  };
+}
+```
+
+## SUCCESS CRITERIA
+By the end of this session, you should have:
+
+- [ ] **Enhanced Dashboard**: Three-state dashboard (waiting/active/planning) with beautiful UI
+- [ ] **SDK Integration**: Working "Start Session" button that creates Claude Code sessions
+- [ ] **Project Planning**: "Plan" button that analyzes projects and generates session plans
+- [ ] **Real-time Monitoring**: Live session progress tracking and token usage
+- [ ] **Quota Management**: Weekly limit protection with usage visualization
+- [ ] **Session History**: Clickable history with detailed session metrics
+- [ ] **Error Handling**: Robust error boundaries and recovery mechanisms
+- [ ] **State Persistence**: Session data survives dashboard restarts
+
+## IMPLEMENTATION APPROACH
+
+### **Start Here**:
+1. **Analyze Current Dashboard**: Review existing moonlock-dashboard.tsx structure
+2. **Plan Component Architecture**: Design the three-state system (waiting/active/planning)
+3. **Build Enhanced UI**: Implement the session history, quota bars, and action buttons
+4. **Create SDK Service**: Build ClaudeCodeService.ts with session management
+5. **Integrate Real-time Updates**: Connect dashboard to SDK for live monitoring
+6. **Add Project Planning**: Implement complexity analysis and session planning
+7. **Test Integration**: Verify all features work together seamlessly
+
+### **Key Dependencies**:
+- **Claude Code SDK**: Must be properly installed and configured
+- **React State Management**: Use hooks for optimal performance
+- **TypeScript**: Ensure type safety throughout
+- **Error Handling**: Graceful degradation when SDK unavailable
+
+### **Model Usage Strategy**:
+- **Sonnet 4**: UI implementation, basic SDK integration, state management
+- **Opus 4**: Complex project analysis logic, session optimization algorithms
+
+## CONTEXT PRESERVATION
+This is Session 1 of 3. At the end of this session:
+- **Document**: All architectural decisions and implementation patterns
+- **Prepare**: Handoff notes for Session 2 (calendar integration)
+- **Save**: Session state and progress for continuity
+- **Test**: Verify core functionality works before handoff
+
+## QUALITY TARGETS
+- **Performance**: Dashboard responds in <100ms
+- **Accuracy**: Session estimates within 15% of actual usage
+- **Reliability**: Error recovery works 100% of the time
+- **Usability**: Intuitive interface requiring no documentation
+
+Begin implementation by analyzing the current dashboard structure and planning the enhanced three-state architecture. Focus on building a robust foundation that will support advanced features in subsequent sessions.
+
+Remember: Every token counts. Build strategically, test thoroughly, and prepare excellent handoff documentation for the next session.

@@ -1,0 +1,104 @@
+{
+  "deployment_summary": {
+    "success": false,
+    "timestamp": "2025-08-18T22:16:53.703068",
+    "total_execution_time_seconds": 2.455938,
+    "total_agents": 4,
+    "successful_agents": 1,
+    "success_rate_percent": 25.0,
+    "total_files_created": 12,
+    "error": null
+  },
+  "phase_results": [
+    {
+      "phase_id": "phase_2",
+      "phase_name": "Simplified Data Flow Architecture",
+      "success": false,
+      "execution_time_seconds": 2.455704927444458,
+      "agent_results": [
+        {
+          "agent_id": "agent_1",
+          "agent_name": "Database Architecture Specialist",
+          "success": false,
+          "execution_time_seconds": 2.4053680896759033,
+          "output": "",
+          "error": "Validation failed: 2025-08-18 22:16:51,307 - SchemaMigration - INFO - Analyzing current system...\n2025-08-18 22:16:53,643 - SchemaMigration - INFO - Creating migration plan...\n2025-08-18 22:16:53,644 - SchemaMigration - INFO - Migration plan exported to /Users/supabowl/Library/Mobile Documents/com~apple~CloudDocs/BHT Promo iCloud/Organized AI/Windsurf/Claude Code Optimizer/migrations/migration_plan.json\nTraceback (most recent call last):\n  File \"/Users/supabowl/Library/Mobile Documents/com~apple~CloudDocs/BHT Promo iCloud/Organized AI/Windsurf/Claude Code Optimizer/migrations/schema_migration_plan.py\", line 447, in <module>\n    main()\n    ~~~~^^\n  File \"/Users/supabowl/Library/Mobile Documents/com~apple~CloudDocs/BHT Promo iCloud/Organized AI/Windsurf/Claude Code Optimizer/migrations/schema_migration_plan.py\", line 435, in main\n    script_path = planner.generate_migration_script()\n  File \"/Users/supabowl/Library/Mobile Documents/com~apple~CloudDocs/BHT Promo iCloud/Organized AI/Windsurf/Claude Code Optimizer/migrations/schema_migration_plan.py\", line 418, in generate_migration_script\n    '''.format(timestamp=datetime.now().isoformat())\n        ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nKeyError: \"'='*60\"\n",
+          "files_created": [
+            "schemas/optimized_supabase_schema.sql",
+            "schemas/local_analytics_sqlite_schema.sql",
+            "migrations/schema_migration_plan.py",
+            "docs/simplified_architecture.md"
+          ]
+        },
+        {
+          "agent_id": "agent_2",
+          "agent_name": "Data Flow Optimization Specialist",
+          "success": true,
+          "execution_time_seconds": 0.04910087585449219,
+          "output": "",
+          "error": null,
+          "files_created": [
+            "src/data_flow/simplified_ingestion.py",
+            "src/data_flow/error_handler.py",
+            "src/data_flow/validator.py",
+            "src/data_flow/performance_monitor.py",
+            "config/data_flow_config.yaml"
+          ]
+        },
+        {
+          "agent_id": "agent_3",
+          "agent_name": "Migration & Cleanup Specialist",
+          "success": false,
+          "execution_time_seconds": 0.0003120899200439453,
+          "output": "",
+          "error": "Missing files: ['migrations/rollback_procedures.py']",
+          "files_created": [
+            "migrations/backup_current_system.py",
+            "migrations/migrate_sqlite_to_supabase.py",
+            "migrations/cleanup_legacy_files.py"
+          ]
+        },
+        {
+          "agent_id": "agent_4",
+          "agent_name": "Testing & Validation Specialist",
+          "success": false,
+          "execution_time_seconds": 0.0001678466796875,
+          "output": "",
+          "error": "Missing files: ['tests/test_data_flow.py', 'tests/performance_benchmarks.py', 'tests/data_integrity_tests.py', 'tests/integration_tests.py', 'scripts/deployment_validation.sh']",
+          "files_created": []
+        }
+      ],
+      "summary": "1/4 agents deployed successfully"
+    }
+  ],
+  "performance_targets": {
+    "detection_latency_ms": 50,
+    "data_sync_latency_ms": 100,
+    "dashboard_update_ms": 200,
+    "resource_usage_cpu_percent": 1,
+    "resource_usage_memory_mb": 100,
+    "reliability_target_percent": 99.9
+  },
+  "next_steps": [
+    "1. Review deployment errors in the phase_results section",
+    "2. Fix any missing files or configuration issues",
+    "3. Re-run deployment: python deploy_parallel_agent_system.py",
+    "4. Check system requirements and dependencies",
+    "5. Verify Supabase connection and credentials",
+    "6. Contact support if issues persist"
+  ],
+  "files_created": [
+    "config/data_flow_config.yaml",
+    "docs/simplified_architecture.md",
+    "migrations/backup_current_system.py",
+    "migrations/cleanup_legacy_files.py",
+    "migrations/migrate_sqlite_to_supabase.py",
+    "migrations/schema_migration_plan.py",
+    "schemas/local_analytics_sqlite_schema.sql",
+    "schemas/optimized_supabase_schema.sql",
+    "src/data_flow/error_handler.py",
+    "src/data_flow/performance_monitor.py",
+    "src/data_flow/simplified_ingestion.py",
+    "src/data_flow/validator.py"
+  ]
+}

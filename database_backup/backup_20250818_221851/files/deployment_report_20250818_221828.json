@@ -1,0 +1,117 @@
+{
+  "deployment_summary": {
+    "success": false,
+    "timestamp": "2025-08-18T22:18:28.220192",
+    "total_execution_time_seconds": 3.805939,
+    "total_agents": 4,
+    "successful_agents": 2,
+    "success_rate_percent": 50.0,
+    "total_files_created": 18,
+    "error": null
+  },
+  "phase_results": [
+    {
+      "phase_id": "phase_2",
+      "phase_name": "Simplified Data Flow Architecture",
+      "success": false,
+      "execution_time_seconds": 3.8055269718170166,
+      "agent_results": [
+        {
+          "agent_id": "agent_1",
+          "agent_name": "Database Architecture Specialist",
+          "success": false,
+          "execution_time_seconds": 1.7842400074005127,
+          "output": "",
+          "error": "Validation failed: 2025-08-18 22:18:24,474 - SchemaMigration - INFO - Analyzing current system...\n2025-08-18 22:18:26,189 - SchemaMigration - INFO - Creating migration plan...\n2025-08-18 22:18:26,190 - SchemaMigration - INFO - Migration plan exported to /Users/supabowl/Library/Mobile Documents/com~apple~CloudDocs/BHT Promo iCloud/Organized AI/Windsurf/Claude Code Optimizer/migrations/migration_plan.json\nTraceback (most recent call last):\n  File \"/Users/supabowl/Library/Mobile Documents/com~apple~CloudDocs/BHT Promo iCloud/Organized AI/Windsurf/Claude Code Optimizer/migrations/schema_migration_plan.py\", line 447, in <module>\n    main()\n    ~~~~^^\n  File \"/Users/supabowl/Library/Mobile Documents/com~apple~CloudDocs/BHT Promo iCloud/Organized AI/Windsurf/Claude Code Optimizer/migrations/schema_migration_plan.py\", line 435, in main\n    script_path = planner.generate_migration_script()\n  File \"/Users/supabowl/Library/Mobile Documents/com~apple~CloudDocs/BHT Promo iCloud/Organized AI/Windsurf/Claude Code Optimizer/migrations/schema_migration_plan.py\", line 418, in generate_migration_script\n    '''.format(timestamp=datetime.now().isoformat())\n        ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nKeyError: \"'='*60\"\n",
+          "files_created": [
+            "schemas/optimized_supabase_schema.sql",
+            "schemas/local_analytics_sqlite_schema.sql",
+            "migrations/schema_migration_plan.py",
+            "docs/simplified_architecture.md"
+          ]
+        },
+        {
+          "agent_id": "agent_2",
+          "agent_name": "Data Flow Optimization Specialist",
+          "success": true,
+          "execution_time_seconds": 0.04593801498413086,
+          "output": "",
+          "error": null,
+          "files_created": [
+            "src/data_flow/simplified_ingestion.py",
+            "src/data_flow/error_handler.py",
+            "src/data_flow/validator.py",
+            "src/data_flow/performance_monitor.py",
+            "config/data_flow_config.yaml"
+          ]
+        },
+        {
+          "agent_id": "agent_3",
+          "agent_name": "Migration & Cleanup Specialist",
+          "success": true,
+          "execution_time_seconds": 1.9081668853759766,
+          "output": "\n\u2705 Backup completed successfully!\n\ud83d\udce6 Backup ID: backup_20250818_221826\n\ud83d\udccd Location: /Users/supabowl/Library/Mobile Documents/com~apple~CloudDocs/BHT Promo iCloud/Organized AI/Windsurf/Claude Code Optimizer/database_backup/backup_20250818_221826\n\ud83d\udcca Size: 96.8 MB\n\ud83d\uddc3\ufe0f  Files: 38\n\ud83d\uddc4\ufe0f  Databases: 19\n\n\ud83d\udccb Total backups available: 1\n",
+          "error": null,
+          "files_created": [
+            "migrations/backup_current_system.py",
+            "migrations/migrate_sqlite_to_supabase.py",
+            "migrations/cleanup_legacy_files.py",
+            "migrations/rollback_procedures.py"
+          ]
+        },
+        {
+          "agent_id": "agent_4",
+          "agent_name": "Testing & Validation Specialist",
+          "success": false,
+          "execution_time_seconds": 0.06608295440673828,
+          "output": "",
+          "error": "Validation failed: Traceback (most recent call last):\n  File \"/Users/supabowl/Library/Mobile Documents/com~apple~CloudDocs/BHT Promo iCloud/Organized AI/Windsurf/Claude Code Optimizer/tests/migration_validation.py\", line 16, in <module>\n    import psycopg2\nModuleNotFoundError: No module named 'psycopg2'\n",
+          "files_created": [
+            "tests/test_data_flow.py",
+            "tests/performance_benchmarks.py",
+            "tests/data_integrity_tests.py",
+            "tests/integration_tests.py",
+            "scripts/deployment_validation.sh"
+          ]
+        }
+      ],
+      "summary": "2/4 agents deployed successfully"
+    }
+  ],
+  "performance_targets": {
+    "detection_latency_ms": 50,
+    "data_sync_latency_ms": 100,
+    "dashboard_update_ms": 200,
+    "resource_usage_cpu_percent": 1,
+    "resource_usage_memory_mb": 100,
+    "reliability_target_percent": 99.9
+  },
+  "next_steps": [
+    "1. Review deployment errors in the phase_results section",
+    "2. Fix any missing files or configuration issues",
+    "3. Re-run deployment: python deploy_parallel_agent_system.py",
+    "4. Check system requirements and dependencies",
+    "5. Verify Supabase connection and credentials",
+    "6. Contact support if issues persist"
+  ],
+  "files_created": [
+    "config/data_flow_config.yaml",
+    "docs/simplified_architecture.md",
+    "migrations/backup_current_system.py",
+    "migrations/cleanup_legacy_files.py",
+    "migrations/migrate_sqlite_to_supabase.py",
+    "migrations/rollback_procedures.py",
+    "migrations/schema_migration_plan.py",
+    "schemas/local_analytics_sqlite_schema.sql",
+    "schemas/optimized_supabase_schema.sql",
+    "scripts/deployment_validation.sh",
+    "src/data_flow/error_handler.py",
+    "src/data_flow/performance_monitor.py",
+    "src/data_flow/simplified_ingestion.py",
+    "src/data_flow/validator.py",
+    "tests/data_integrity_tests.py",
+    "tests/integration_tests.py",
+    "tests/performance_benchmarks.py",
+    "tests/test_data_flow.py"
+  ]
+}

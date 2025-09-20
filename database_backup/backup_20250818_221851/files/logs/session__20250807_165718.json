@@ -1,0 +1,14 @@
+{
+  "session_id": "",
+  "start_time": "",
+  "end_time": "2025-08-07T21:57:18Z",
+  "duration_seconds": 1754603838,
+  "duration_minutes": 29243397.3,
+  "tokens_baseline": 0,
+  "tokens_final": 0,
+  "tokens_consumed": 0,
+  "tools_used": 0,
+  "average_rate_per_minute": 0,
+  "tokens_per_tool": 0,
+  "efficiency_rating": "excellent"
+}

@@ -1,0 +1,32 @@
+token_limits:
+  weekly_limit: 500000
+  daily_budget: 71429
+  emergency_reserve: 100000
+  warning_threshold: 0.8
+
+session_types:
+  planning:
+    duration: 120
+    token_budget: 25000
+    model: sonnet
+    description: Project planning and architecture
+  coding:
+    duration: 240
+    token_budget: 75000
+    model: sonnet
+    description: Feature implementation and development
+  testing:
+    duration: 180
+    token_budget: 45000
+    model: sonnet
+    description: Testing and quality assurance
+  review:
+    duration: 90
+    token_budget: 20000
+    model: sonnet
+    description: Code review and optimization
+
+working_hours:
+  start: '09:00'
+  end: '17:00'
+  timezone: America/Los_Angeles

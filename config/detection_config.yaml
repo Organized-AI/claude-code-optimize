@@ -1,0 +1,44 @@
+# Detection System Configuration
+# Claude Code session detection and monitoring
+
+# Process monitoring
+process_monitoring:
+  scan_interval: 2.0  # seconds
+  activity_timeout: 300  # 5 minutes
+  min_session_duration: 10  # seconds
+  memory_threshold_mb: 50
+  cpu_threshold_percent: 1.0
+
+# Data directories to monitor
+data_directories:
+  - "~/.claude"
+  - "~/.anthropic"
+  - "~/Library/Application Support/Claude"
+  - "~/AppData/Local/Claude"
+
+# Detection patterns
+claude_patterns:
+  - "claude-code"
+  - "claude_code"
+  - "claude-desktop"
+  - "/Applications/Claude.app"
+  - "anthropic"
+  - "claude"
+
+# Excluded processes
+exclude_processes:
+  - "claude-updater"
+  - "claude-installer"
+
+# Session detection
+session_detection:
+  auto_start_detection: true
+  lifecycle_tracking: true
+  activity_monitoring: true
+  real_time_updates: true
+
+# Performance settings
+performance:
+  max_memory_usage_mb: 100
+  target_cpu_usage_percent: 1
+  detection_latency_target_ms: 50

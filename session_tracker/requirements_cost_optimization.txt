@@ -1,0 +1,15 @@
+flask>=2.0.0
+sqlite3
+pathlib
+datetime
+typing
+dataclasses
+enum34; python_version < '3.4'
+threading
+json
+logging
+re
+statistics
+subprocess
+signal
+time

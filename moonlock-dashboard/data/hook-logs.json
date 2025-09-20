@@ -1,0 +1,46 @@
+{
+  "logs": [
+    {
+      "id": "log_1754410414767_pxn24fotv",
+      "hookId": "PostToolUse_0_0",
+      "hookName": "File Edit Hook",
+      "event": "executed",
+      "status": "success",
+      "source": "claude-code",
+      "command": "echo 'File edited successfully'",
+      "duration": 150,
+      "output": "File edited successfully",
+      "timestamp": 1754410414767
+    }
+  ],
+  "hooks": [
+    {
+      "id": "PostToolUse_0_0",
+      "name": "PostToolUse Hook 1",
+      "type": "PostToolUse",
+      "matcher": "Edit|MultiEdit|Write",
+      "command": "echo 'File edited successfully'",
+      "enabled": true,
+      "createdAt": 1754424838315,
+      "executionCount": 0,
+      "successCount": 0,
+      "failureCount": 0,
+      "averageDuration": 0,
+      "source": "manual"
+    },
+    {
+      "id": "PreToolUse_0_0",
+      "name": "PreToolUse Hook 1",
+      "type": "PreToolUse",
+      "matcher": "Bash",
+      "command": "echo 'About to run bash command'",
+      "enabled": true,
+      "createdAt": 1754424838315,
+      "executionCount": 0,
+      "successCount": 0,
+      "failureCount": 0,
+      "averageDuration": 0,
+      "source": "manual"
+    }
+  ]
+}

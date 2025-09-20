@@ -1,0 +1,31 @@
+{
+  "name": "claude-code-dashboard",
+  "version": "1.0.0",
+  "description": "Claude Code Optimizer Dashboard with Netlify Integration",
+  "main": "moonlock-dashboard-enhanced.tsx",
+  "scripts": {
+    "build": "echo 'Dashboard build - add your build process here'",
+    "dev": "echo 'Development server - configure as needed'",
+    "test": "echo 'Tests - add testing framework'",
+    "deploy": "netlify deploy --prod",
+    "sync:start": "python3 session_tracker/netlify_sync.py",
+    "dashboard:start": "python3 session_tracker/dashboard_server.py"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "@netlify/functions": "^2.4.0"
+  },
+  "keywords": ["claude", "dashboard", "session-tracking", "netlify"],
+  "author": "Claude Code Optimizer",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-repo/claude-code-dashboard"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

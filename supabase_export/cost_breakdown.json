@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "session_id": "cc_session_20250816_222413",
+    "input_tokens": 9000,
+    "output_tokens": 6000,
+    "input_cost": 0.027,
+    "output_cost": 0.018,
+    "total_cost": 0.045,
+    "cost_calculation_date": "2025-08-18T21:13:40+00:00"
+  }
+]

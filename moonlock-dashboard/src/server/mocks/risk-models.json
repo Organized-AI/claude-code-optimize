@@ -1,0 +1,415 @@
+{
+  "quotaRiskModels": {
+    "sonnetQuotaModel": {
+      "weeklyLimit": 480,
+      "safetyThreshold": 0.90,
+      "warningThreshold": 0.80,
+      "riskFactors": {
+        "currentUsage": {
+          "weight": 0.35,
+          "thresholds": {
+            "low": 0.60,
+            "medium": 0.75,
+            "high": 0.85,
+            "critical": 0.90
+          }
+        },
+        "projectedUsage": {
+          "weight": 0.40,
+          "calculation": "currentUsage + estimatedAdditional",
+          "riskMultiplier": 1.2
+        },
+        "complexityMultiplier": {
+          "weight": 0.15,
+          "formula": "1 + (complexity - 5) * 0.1"
+        },
+        "historicalOverrun": {
+          "weight": 0.10,
+          "basedOn": "last 4 weeks average overrun rate"
+        }
+      }
+    },
+    "opusQuotaModel": {
+      "weeklyLimit": 40,
+      "safetyThreshold": 0.90,
+      "warningThreshold": 0.80,
+      "riskFactors": {
+        "currentUsage": {
+          "weight": 0.40,
+          "thresholds": {
+            "low": 0.50,
+            "medium": 0.65,
+            "high": 0.80,
+            "critical": 0.90
+          }
+        },
+        "projectedUsage": {
+          "weight": 0.45,
+          "calculation": "currentUsage + estimatedAdditional",
+          "riskMultiplier": 1.5
+        },
+        "complexityRequirement": {
+          "weight": 0.15,
+          "description": "Higher complexity projects need more Opus time"
+        }
+      }
+    }
+  },
+  "timeRiskModels": {
+    "baseTimeRisk": {
+      "factors": {
+        "complexity": {
+          "weight": 0.30,
+          "multipliers": {
+            "1-3": 0.8,
+            "4-6": 1.0,
+            "7-8": 1.4,
+            "9-10": 2.0
+          }
+        },
+        "technicalDebt": {
+          "weight": 0.25,
+          "thresholds": {
+            "low": 20,
+            "medium": 50,
+            "high": 100,
+            "extreme": 200
+          },
+          "riskMultipliers": {
+            "low": 1.0,
+            "medium": 1.3,
+            "high": 1.8,
+            "extreme": 2.5
+          }
+        },
+        "testCoverage": {
+          "weight": 0.20,
+          "inverse": true,
+          "thresholds": {
+            "excellent": 90,
+            "good": 70,
+            "fair": 50,
+            "poor": 30
+          },
+          "riskMultipliers": {
+            "excellent": 0.8,
+            "good": 1.0,
+            "fair": 1.3,
+            "poor": 1.8
+          }
+        },
+        "documentation": {
+          "weight": 0.15,
+          "inverse": true,
+          "impact": "Poor documentation increases research and understanding time"
+        },
+        "dependencyRisk": {
+          "weight": 0.10,
+          "factors": {
+            "outdatedCount": "Number of outdated dependencies",
+            "vulnerabilities": "Security vulnerabilities requiring updates",
+            "depth": "Dependency tree depth increases conflict risk"
+          }
+        }
+      }
+    },
+    "overrunProbability": {
+      "baseRate": 0.25,
+      "adjustments": {
+        "highComplexity": 0.35,
+        "poorTesting": 0.25,
+        "highTechnicalDebt": 0.40,
+        "poorDocumentation": 0.20,
+        "manyDependencies": 0.15,
+        "newTechnology": 0.30,
+        "tightDeadline": 0.45
+      }
+    }
+  },
+  "complexityRiskModels": {
+    "architecturalRisk": {
+      "maintainabilityIndex": {
+        "weight": 0.35,
+        "thresholds": {
+          "excellent": 85,
+          "good": 70,
+          "fair": 50,
+          "poor": 30
+        },
+        "riskLevels": {
+          "excellent": 0.1,
+          "good": 0.2,
+          "fair": 0.4,
+          "poor": 0.8
+        }
+      },
+      "coupling": {
+        "weight": 0.25,
+        "scale": "1-10",
+        "riskThreshold": 7,
+        "impact": "High coupling makes changes risky and unpredictable"
+      },
+      "cohesion": {
+        "weight": 0.20,
+        "scale": "1-10",
+        "riskThreshold": 4,
+        "inverse": true,
+        "impact": "Low cohesion indicates poor module organization"
+      },
+      "technicalDebt": {
+        "weight": 0.20,
+        "measurement": "hours",
+        "thresholds": {
+          "manageable": 20,
+          "concerning": 50,
+          "problematic": 100,
+          "critical": 200
+        }
+      }
+    },
+    "codebaseRisk": {
+      "cyclomaticComplexity": {
+        "weight": 0.30,
+        "thresholds": {
+          "simple": 5,
+          "moderate": 10,
+          "complex": 15,
+          "veryComplex": 20
+        }
+      },
+      "duplication": {
+        "weight": 0.25,
+        "thresholds": {
+          "excellent": 5,
+          "good": 10,
+          "concerning": 15,
+          "problematic": 25
+        }
+      },
+      "fileCount": {
+        "weight": 0.20,
+        "impact": "Large codebases are harder to navigate and understand"
+      },
+      "languageDiversity": {
+        "weight": 0.15,
+        "impact": "Multiple languages require diverse expertise"
+      },
+      "linesOfCode": {
+        "weight": 0.10,
+        "thresholds": {
+          "small": 5000,
+          "medium": 20000,
+          "large": 50000,
+          "huge": 100000
+        }
+      }
+    }
+  },
+  "mitigationStrategies": {
+    "quotaRisk": {
+      "high": [
+        {
+          "strategy": "Switch to Sonnet for routine tasks",
+          "effectiveness": 0.70,
+          "effort": 3,
+          "description": "Use Sonnet for implementation and testing, reserve Opus for architecture"
+        },
+        {
+          "strategy": "Reduce project scope",
+          "effectiveness": 0.85,
+          "effort": 6,
+          "description": "Focus on MVP features to stay within quota limits"
+        },
+        {
+          "strategy": "Phase project delivery",
+          "effectiveness": 0.80,
+          "effort": 4,
+          "description": "Break project into multiple phases across weeks"
+        }
+      ],
+      "medium": [
+        {
+          "strategy": "Optimize prompting efficiency",
+          "effectiveness": 0.50,
+          "effort": 4,
+          "description": "Use more efficient prompting strategies to reduce token usage"
+        },
+        {
+          "strategy": "Increase automation",
+          "effectiveness": 0.60,
+          "effort": 7,
+          "description": "Use scripts and tools to reduce manual Claude interactions"
+        }
+      ]
+    },
+    "timeRisk": {
+      "high": [
+        {
+          "strategy": "Incremental development approach",
+          "effectiveness": 0.65,
+          "effort": 5,
+          "description": "Break work into small, testable increments"
+        },
+        {
+          "strategy": "Add buffer time",
+          "effectiveness": 0.45,
+          "effort": 2,
+          "description": "Add 25-50% buffer time to estimates"
+        },
+        {
+          "strategy": "Parallel task execution",
+          "effectiveness": 0.55,
+          "effort": 6,
+          "description": "Identify and execute independent tasks in parallel"
+        }
+      ],
+      "medium": [
+        {
+          "strategy": "Focus on testing early",
+          "effectiveness": 0.50,
+          "effort": 4,
+          "description": "Write tests first to catch issues early"
+        },
+        {
+          "strategy": "Regular progress checkpoints",
+          "effectiveness": 0.40,
+          "effort": 3,
+          "description": "Set 2-hour checkpoints to assess progress"
+        }
+      ]
+    },
+    "complexityRisk": {
+      "high": [
+        {
+          "strategy": "Architecture-first approach",
+          "effectiveness": 0.75,
+          "effort": 5,
+          "description": "Spend initial time understanding and documenting architecture"
+        },
+        {
+          "strategy": "Refactor before extending",
+          "effectiveness": 0.70,
+          "effort": 8,
+          "description": "Clean up technical debt before adding new features"
+        },
+        {
+          "strategy": "Modular implementation",
+          "effectiveness": 0.60,
+          "effort": 6,
+          "description": "Implement features as independent modules"
+        }
+      ],
+      "medium": [
+        {
+          "strategy": "Improve test coverage",
+          "effectiveness": 0.55,
+          "effort": 7,
+          "description": "Add comprehensive testing to reduce uncertainty"
+        },
+        {
+          "strategy": "Documentation review",
+          "effectiveness": 0.35,
+          "effort": 3,
+          "description": "Review and improve existing documentation"
+        }
+      ]
+    }
+  },
+  "predictionModels": {
+    "successPrediction": {
+      "baselineSuccess": 0.70,
+      "factorWeights": {
+        "complexity": 0.25,
+        "testCoverage": 0.15,
+        "documentation": 0.10,
+        "technicalDebt": 0.20,
+        "teamExperience": 0.15,
+        "timeConstraints": 0.15
+      },
+      "adjustments": {
+        "complexity": {
+          "1-3": 0.15,
+          "4-6": 0.0,
+          "7-8": -0.20,
+          "9-10": -0.40
+        },
+        "testCoverage": {
+          "90-100": 0.15,
+          "70-89": 0.05,
+          "50-69": 0.0,
+          "30-49": -0.15,
+          "0-29": -0.30
+        }
+      }
+    },
+    "durationPrediction": {
+      "baseFormula": "complexity * 45 + fileCount * 0.3 + dependencyCount * 1.5",
+      "adjustmentFactors": {
+        "technicalDebt": "debtHours * 2",
+        "testCoverage": "(100 - coverage) * 0.5",
+        "documentation": "(100 - completeness) * 0.3"
+      },
+      "confidenceFactors": {
+        "similarProjects": 0.30,
+        "teamExperience": 0.25,
+        "technologyFamiliarity": 0.20,
+        "requirementClarity": 0.15,
+        "timeConstraints": 0.10
+      }
+    }
+  },
+  "alertThresholds": {
+    "quotaAlerts": {
+      "sonnet": {
+        "green": 0.60,
+        "yellow": 0.75,
+        "orange": 0.85,
+        "red": 0.90
+      },
+      "opus": {
+        "green": 0.50,
+        "yellow": 0.65,
+        "orange": 0.80,
+        "red": 0.90
+      }
+    },
+    "riskAlerts": {
+      "overall": {
+        "low": 30,
+        "medium": 50,
+        "high": 70,
+        "critical": 85
+      },
+      "quota": {
+        "low": 40,
+        "medium": 60,
+        "high": 75,
+        "critical": 90
+      },
+      "time": {
+        "low": 25,
+        "medium": 45,
+        "high": 65,
+        "critical": 80
+      },
+      "complexity": {
+        "low": 35,
+        "medium": 55,
+        "high": 75,
+        "critical": 90
+      }
+    }
+  },
+  "learningParameters": {
+    "adaptationRate": 0.05,
+    "forgettingFactor": 0.95,
+    "minimumSamples": 5,
+    "confidenceThreshold": 0.70,
+    "modelUpdateFrequency": "weekly",
+    "patternRecognition": {
+      "similarityThreshold": 0.60,
+      "weightDecay": 0.90,
+      "maxHistorySize": 100
+    }
+  }
+}

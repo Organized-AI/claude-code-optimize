@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code API Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 20px;
+        }
+        .endpoint {
+            margin: 20px 0;
+            padding: 15px;
+            background: #1e293b;
+            border-radius: 8px;
+        }
+        .endpoint h3 {
+            color: #60a5fa;
+            margin: 0 0 10px 0;
+        }
+        .status {
+            color: #10b981;
+            font-weight: bold;
+        }
+        .error {
+            color: #ef4444;
+        }
+        pre {
+            background: #0f172a;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Claude Code Dashboard API Test</h1>
+    <p class="status">Testing production deployment: https://moonlock-dashboard-licc27bp0-jordaaans-projects.vercel.app</p>
+    
+    <div id="results"></div>
+
+    <script>
+        const baseUrl = 'https://moonlock-dashboard-licc27bp0-jordaaans-projects.vercel.app';
+        const endpoints = [
+            'live-status',
+            'precision-metrics',
+            'budget-progress'
+        ];
+
+        async function testEndpoints() {
+            const resultsDiv = document.getElementById('results');
+            
+            for (const endpoint of endpoints) {
+                const endpointDiv = document.createElement('div');
+                endpointDiv.className = 'endpoint';
+                
+                const title = document.createElement('h3');
+                title.textContent = `/api/claude-code?endpoint=${endpoint}`;
+                endpointDiv.appendChild(title);
+                
+                try {
+                    const response = await fetch(`${baseUrl}/api/claude-code?endpoint=${endpoint}`);
+                    const data = await response.json();
+                    
+                    const status = document.createElement('p');
+                    status.className = 'status';
+                    status.textContent = `✅ Status: ${response.status} OK`;
+                    endpointDiv.appendChild(status);
+                    
+                    const pre = document.createElement('pre');
+                    pre.textContent = JSON.stringify(data, null, 2);
+                    endpointDiv.appendChild(pre);
+                    
+                    // Special checks for session data
+                    if (endpoint === 'live-status' && data.hasActiveSession) {
+                        const sessionInfo = document.createElement('p');
+                        sessionInfo.className = 'status';
+                        sessionInfo.textContent = `✅ Active Session Detected: ${data.activeSession.sessionId}`;
+                        endpointDiv.appendChild(sessionInfo);
+                    }
+                    
+                    if (endpoint === 'precision-metrics' && data.efficiency > 0) {
+                        const efficiency = document.createElement('p');
+                        efficiency.className = 'status';
+                        efficiency.textContent = `✅ Cache Efficiency: ${data.efficiency}%`;
+                        endpointDiv.appendChild(efficiency);
+                    }
+                    
+                } catch (error) {
+                    const errorP = document.createElement('p');
+                    errorP.className = 'error';
+                    errorP.textContent = `❌ Error: ${error.message}`;
+                    endpointDiv.appendChild(errorP);
+                }
+                
+                resultsDiv.appendChild(endpointDiv);
+            }
+        }
+
+        // Test endpoints on page load
+        testEndpoints();
+        
+        // Also test SSE endpoint
+        const sseDiv = document.createElement('div');
+        sseDiv.className = 'endpoint';
+        sseDiv.innerHTML = '<h3>/api/claude-code?endpoint=events (SSE)</h3>';
+        
+        const eventSource = new EventSource(`${baseUrl}/api/claude-code?endpoint=events`);
+        let eventCount = 0;
+        
+        eventSource.onmessage = (event) => {
+            eventCount++;
+            if (eventCount === 1) {
+                const status = document.createElement('p');
+                status.className = 'status';
+                status.textContent = '✅ SSE Connection Established';
+                sseDiv.appendChild(status);
+                
+                const pre = document.createElement('pre');
+                pre.textContent = `First Event Received:\n${event.data}`;
+                sseDiv.appendChild(pre);
+                
+                document.getElementById('results').appendChild(sseDiv);
+                eventSource.close();
+            }
+        };
+        
+        eventSource.onerror = (error) => {
+            const errorP = document.createElement('p');
+            errorP.className = 'error';
+            errorP.textContent = '❌ SSE Connection Failed';
+            sseDiv.appendChild(errorP);
+            document.getElementById('results').appendChild(sseDiv);
+            eventSource.close();
+        };
+    </script>
+</body>
+</html>

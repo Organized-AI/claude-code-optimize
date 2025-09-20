@@ -1,0 +1,156 @@
+{
+  "summary": {
+    "total_tests": 10,
+    "passed_tests": 9,
+    "failed_tests": 1,
+    "success_rate": 90.0,
+    "total_duration": 25.617280960083008,
+    "average_test_duration": 2.561728096008301
+  },
+  "test_results": [
+    {
+      "name": "Basic Connection Test",
+      "success": true,
+      "duration": 0.027766942977905273,
+      "details": {
+        "initial_message_type": "initial_data",
+        "initial_data_keys": [
+          "type",
+          "client_id",
+          "server_time",
+          "active_sessions",
+          "recent_sessions",
+          "analytics",
+          "five_hour_blocks",
+          "config"
+        ]
+      },
+      "error": null
+    },
+    {
+      "name": "Message Echo Test",
+      "success": true,
+      "duration": 1.0030579566955566,
+      "details": {
+        "message_sent": true,
+        "connection_stable": true
+      },
+      "error": null
+    },
+    {
+      "name": "Concurrent Connections Test",
+      "success": true,
+      "duration": 3.0077528953552246,
+      "details": {
+        "total_connections": 5,
+        "successful_connections": 5,
+        "success_rate": 1.0
+      },
+      "error": null
+    },
+    {
+      "name": "Reconnection Test",
+      "success": true,
+      "duration": 1.0112502574920654,
+      "details": {
+        "reconnection_successful": true,
+        "reconnect_time": 1.0062639713287354
+      },
+      "error": null
+    },
+    {
+      "name": "Message Ordering Test",
+      "success": true,
+      "duration": 2.0177180767059326,
+      "details": {
+        "messages_sent": 10,
+        "connection_stable": true
+      },
+      "error": null
+    },
+    {
+      "name": "Heartbeat Test",
+      "success": true,
+      "duration": 15.01139211654663,
+      "details": {
+        "pings_sent": 5,
+        "pongs_received": 5,
+        "connection_maintained": true
+      },
+      "error": null
+    },
+    {
+      "name": "Load Test",
+      "success": true,
+      "duration": 2.010795831680298,
+      "details": {
+        "messages_sent": 50,
+        "avg_send_time": 3.4279823303222657e-05,
+        "max_send_time": 0.00011396408081054688,
+        "throughput_msgs_per_sec": 24.86576483718729
+      },
+      "error": null
+    },
+    {
+      "name": "Network Interruption Simulation",
+      "success": false,
+      "duration": 0.004338979721069336,
+      "details": {},
+      "error": "invalid status code"
+    },
+    {
+      "name": "Large Message Test",
+      "success": true,
+      "duration": 1.5106580257415771,
+      "details": {
+        "size_1024": {
+          "send_time": 0.0001270771026611328,
+          "success": true
+        },
+        "size_10240": {
+          "send_time": 0.0003750324249267578,
+          "success": true
+        },
+        "size_102400": {
+          "send_time": 0.0003771781921386719,
+          "success": true
+        }
+      },
+      "error": null
+    },
+    {
+      "name": "Connection State Test",
+      "success": true,
+      "duration": 0.008623838424682617,
+      "details": {
+        "state_transitions": [
+          [
+            "connected",
+            1755203758.7752562
+          ],
+          [
+            "data_received",
+            1755203758.7752619
+          ],
+          [
+            "clean_close",
+            1755203758.77559
+          ],
+          [
+            "reconnected",
+            1755203758.779186
+          ],
+          [
+            "data_received_again",
+            1755203758.7793002
+          ]
+        ],
+        "all_states_reached": true
+      },
+      "error": null
+    }
+  ],
+  "recommendations": [
+    "\u26a0\ufe0f 1 test(s) failed. See details above."
+  ]
+}

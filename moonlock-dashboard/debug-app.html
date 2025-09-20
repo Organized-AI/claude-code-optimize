@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - Dashboard Status</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #0f172a;
+            color: #f1f5f9;
+            padding: 20px;
+            margin: 0;
+        }
+        .status {
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #0ea5e9;
+        }
+        .error {
+            border-left-color: #ef4444;
+        }
+        .success {
+            border-left-color: #10b981;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌙 Moonlock Dashboard - Debug Status</h1>
+    
+    <div class="status success">
+        <h3>✅ Build Status</h3>
+        <p>Last build: Successfully completed</p>
+        <p>Bundle size: 260.35 kB (72.60 kB gzipped)</p>
+        <p>Deployment: https://claude-code-optimizer-dashboard.netlify.app</p>
+    </div>
+
+    <div class="status" id="react-status">
+        <h3>🔄 React Loading Test</h3>
+        <p>Testing React mount...</p>
+    </div>
+
+    <div class="status">
+        <h3>📊 System Status</h3>
+        <p>Previous session: ✅ 45/100 prompts used (45% efficiency)</p>
+        <p>Implementation: ✅ All core features completed</p>
+        <p>Real token data: ✅ LiveSessionExtractor integrated</p>
+        <p>Authentication: ⚠️ Vercel SSO blocking public access</p>
+    </div>
+
+    <div class="status">
+        <h3>🚀 Next Steps</h3>
+        <ul>
+            <li>✅ Netlify deployment working (current)</li>
+            <li>🔄 Debug React loading issue</li>
+            <li>⚠️ Fix dashboard.organizedai.vip DNS (points to 75.2.60.5 instead of Netlify)</li>
+            <li>🔧 Resolve Vercel SSO for team access</li>
+            <li>✨ Verify real token data display</li>
+        </ul>
+    </div>
+
+    <script>
+        // Test React mounting
+        setTimeout(() => {
+            const status = document.getElementById('react-status');
+            try {
+                // Simulate React check
+                if (window.React) {
+                    status.innerHTML = '<h3>✅ React Available</h3><p>React is loaded and available</p>';
+                    status.className = 'status success';
+                } else {
+                    status.innerHTML = '<h3>⚠️ React Check</h3><p>React not detected - this may be why loading screen persists</p>';
+                }
+            } catch (e) {
+                status.innerHTML = '<h3>❌ React Error</h3><p>Error: ' + e.message + '</p>';
+                status.className = 'status error';
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

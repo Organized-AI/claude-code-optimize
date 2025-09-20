@@ -1,0 +1,449 @@
+name: Claude Code Optimizer Dashboard - Test Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run nightly tests at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of tests to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - unit
+          - e2e
+          - performance
+          - visual
+
+env:
+  NODE_VERSION: '18'
+  CI: true
+  
+jobs:
+  # Pre-flight checks
+  preflight:
+    name: Pre-flight Checks
+    runs-on: ubuntu-latest
+    outputs:
+      should-run-tests: ${{ steps.check.outputs.should-run }}
+      test-type: ${{ steps.check.outputs.test-type }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check if tests should run
+      id: check
+      run: |
+        TEST_TYPE="${{ github.event.inputs.test_type || 'all' }}"
+        
+        # Skip tests on certain conditions
+        if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
+          echo "should-run=true" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          echo "should-run=true" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.event_name }}" == "schedule" ]]; then
+          echo "should-run=true" >> $GITHUB_OUTPUT
+          TEST_TYPE="all"
+        elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          echo "should-run=true" >> $GITHUB_OUTPUT
+        else
+          echo "should-run=false" >> $GITHUB_OUTPUT
+        fi
+        
+        echo "test-type=$TEST_TYPE" >> $GITHUB_OUTPUT
+        
+    - name: Setup Node.js
+      if: steps.check.outputs.should-run == 'true'
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      if: steps.check.outputs.should-run == 'true'
+      run: npm ci
+      
+    - name: Lint and type check
+      if: steps.check.outputs.should-run == 'true'
+      run: |
+        npm run lint || echo "Linting completed with warnings"
+        npm run typecheck
+
+  # Unit tests
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: preflight
+    if: needs.preflight.outputs.should-run-tests == 'true' && (needs.preflight.outputs.test-type == 'all' || needs.preflight.outputs.test-type == 'unit')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run unit tests
+      run: |
+        npm run test:ui
+        
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: unit-test-results
+        path: |
+          test-reports/
+          coverage/
+        retention-days: 30
+
+  # End-to-End tests
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: preflight
+    if: needs.preflight.outputs.should-run-tests == 'true' && (needs.preflight.outputs.test-type == 'all' || needs.preflight.outputs.test-type == 'e2e')
+    
+    strategy:
+      matrix:
+        browser: [chromium, firefox, webkit]
+      fail-fast: false
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps ${{ matrix.browser }}
+      
+    - name: Build application
+      run: npm run build
+      
+    - name: Run E2E tests
+      run: |
+        npm run test:e2e -- --project=${{ matrix.browser }} --reporter=json
+      env:
+        CI: true
+        
+    - name: Upload E2E test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: e2e-test-results-${{ matrix.browser }}
+        path: |
+          test-results/
+          test-reports/
+          playwright-report/
+        retention-days: 30
+        
+    - name: Upload screenshots on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: e2e-screenshots-${{ matrix.browser }}
+        path: test-results/
+        retention-days: 7
+
+  # Performance tests
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: preflight
+    if: needs.preflight.outputs.should-run-tests == 'true' && (needs.preflight.outputs.test-type == 'all' || needs.preflight.outputs.test-type == 'performance')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Install performance tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y apache2-utils imagemagick
+        
+    - name: Build application
+      run: npm run build
+      
+    - name: Start application
+      run: |
+        npm run dev &
+        sleep 10
+        
+    - name: Run performance tests
+      run: |
+        chmod +x scripts/performance-benchmark.sh
+        ./scripts/performance-benchmark.sh
+        
+    - name: Upload performance results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-test-results
+        path: test-reports/performance/
+        retention-days: 30
+
+  # Visual regression tests
+  visual-regression-tests:
+    name: Visual Regression Tests
+    runs-on: ubuntu-latest
+    needs: preflight
+    if: needs.preflight.outputs.should-run-tests == 'true' && (needs.preflight.outputs.test-type == 'all' || needs.preflight.outputs.test-type == 'visual')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Install Playwright browsers
+      run: npx playwright install chromium
+      
+    - name: Install ImageMagick
+      run: sudo apt-get update && sudo apt-get install -y imagemagick
+      
+    - name: Build application
+      run: npm run build
+      
+    - name: Start application
+      run: |
+        npm run dev &
+        sleep 10
+        
+    - name: Download baseline images
+      uses: actions/download-artifact@v4
+      with:
+        name: visual-baseline-images
+        path: test-screenshots/baseline/
+      continue-on-error: true
+      
+    - name: Run visual regression tests
+      run: |
+        chmod +x scripts/visual-regression.sh
+        if [ -d "test-screenshots/baseline" ] && [ "$(ls -A test-screenshots/baseline)" ]; then
+          ./scripts/visual-regression.sh http://localhost:5173 test
+        else
+          echo "No baseline images found, creating baseline..."
+          ./scripts/visual-regression.sh http://localhost:5173 baseline
+        fi
+        
+    - name: Upload baseline images
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: visual-baseline-images
+        path: test-screenshots/baseline/
+        retention-days: 90
+        
+    - name: Upload visual test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: visual-regression-results
+        path: |
+          test-screenshots/
+          test-reports/visual/
+        retention-days: 30
+
+  # Deployment validation
+  deployment-tests:
+    name: Deployment Validation
+    runs-on: ubuntu-latest
+    needs: [preflight, unit-tests]
+    if: needs.preflight.outputs.should-run-tests == 'true' && (needs.preflight.outputs.test-type == 'all')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build application
+      run: npm run build
+      
+    - name: Test local deployment
+      run: |
+        chmod +x scripts/test-deployment.sh
+        ./scripts/test-deployment.sh local
+      
+    - name: Upload deployment test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: deployment-test-results
+        path: test-reports/
+        retention-days: 30
+
+  # Test summary and reporting
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [preflight, unit-tests, e2e-tests, performance-tests, visual-regression-tests, deployment-tests]
+    if: always() && needs.preflight.outputs.should-run-tests == 'true'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download all test artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: all-test-results/
+        
+    - name: Generate test summary
+      run: |
+        echo "# 🧪 Test Pipeline Summary" > test-summary.md
+        echo "" >> test-summary.md
+        echo "**Test Type:** ${{ needs.preflight.outputs.test-type }}" >> test-summary.md
+        echo "**Trigger:** ${{ github.event_name }}" >> test-summary.md
+        echo "**Branch:** ${{ github.ref_name }}" >> test-summary.md
+        echo "**Commit:** ${{ github.sha }}" >> test-summary.md
+        echo "**Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> test-summary.md
+        echo "" >> test-summary.md
+        
+        # Check job results
+        echo "## 📊 Test Results" >> test-summary.md
+        echo "" >> test-summary.md
+        
+        if [[ "${{ needs.unit-tests.result }}" == "success" ]]; then
+          echo "✅ **Unit Tests:** Passed" >> test-summary.md
+        elif [[ "${{ needs.unit-tests.result }}" == "skipped" ]]; then
+          echo "⏭️ **Unit Tests:** Skipped" >> test-summary.md
+        else
+          echo "❌ **Unit Tests:** Failed" >> test-summary.md
+        fi
+        
+        if [[ "${{ needs.e2e-tests.result }}" == "success" ]]; then
+          echo "✅ **E2E Tests:** Passed" >> test-summary.md
+        elif [[ "${{ needs.e2e-tests.result }}" == "skipped" ]]; then
+          echo "⏭️ **E2E Tests:** Skipped" >> test-summary.md
+        else
+          echo "❌ **E2E Tests:** Failed" >> test-summary.md
+        fi
+        
+        if [[ "${{ needs.performance-tests.result }}" == "success" ]]; then
+          echo "✅ **Performance Tests:** Passed" >> test-summary.md
+        elif [[ "${{ needs.performance-tests.result }}" == "skipped" ]]; then
+          echo "⏭️ **Performance Tests:** Skipped" >> test-summary.md
+        else
+          echo "❌ **Performance Tests:** Failed" >> test-summary.md
+        fi
+        
+        if [[ "${{ needs.visual-regression-tests.result }}" == "success" ]]; then
+          echo "✅ **Visual Regression:** Passed" >> test-summary.md
+        elif [[ "${{ needs.visual-regression-tests.result }}" == "skipped" ]]; then
+          echo "⏭️ **Visual Regression:** Skipped" >> test-summary.md
+        else
+          echo "❌ **Visual Regression:** Failed" >> test-summary.md
+        fi
+        
+        if [[ "${{ needs.deployment-tests.result }}" == "success" ]]; then
+          echo "✅ **Deployment Tests:** Passed" >> test-summary.md
+        elif [[ "${{ needs.deployment-tests.result }}" == "skipped" ]]; then
+          echo "⏭️ **Deployment Tests:** Skipped" >> test-summary.md
+        else
+          echo "❌ **Deployment Tests:** Failed" >> test-summary.md
+        fi
+        
+        echo "" >> test-summary.md
+        echo "## 📁 Artifacts" >> test-summary.md
+        echo "" >> test-summary.md
+        echo "Test results and reports are available as workflow artifacts:" >> test-summary.md
+        echo "" >> test-summary.md
+        
+        if [ -d "all-test-results" ]; then
+          find all-test-results -name "*.json" -o -name "*.html" -o -name "*.xml" | head -10 | while read file; do
+            echo "- $(basename "$file")" >> test-summary.md
+          done
+        fi
+        
+        cat test-summary.md
+        
+    - name: Upload test summary
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-summary
+        path: test-summary.md
+        retention-days: 90
+        
+    - name: Comment on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const summary = fs.readFileSync('test-summary.md', 'utf8');
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: summary
+          });
+
+  # Notification and cleanup
+  notify:
+    name: Notifications
+    runs-on: ubuntu-latest
+    needs: [test-summary]
+    if: always() && (github.event_name == 'schedule' || failure())
+    
+    steps:
+    - name: Notify on failure
+      if: failure()
+      run: |
+        echo "🚨 Test pipeline failed!"
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Commit: ${{ github.sha }}"
+        echo "Trigger: ${{ github.event_name }}"
+        # In a real setup, you might send notifications to Slack, email, etc.
+        
+    - name: Notify on nightly success
+      if: github.event_name == 'schedule' && success()
+      run: |
+        echo "✅ Nightly test pipeline completed successfully!"
+        echo "All systems are functioning normally."
