@@ -1,0 +1,46 @@
+{
+  "name": "claude-optimizer",
+  "version": "2.0.0",
+  "description": "AI-powered Claude Code session optimizer with calendar automation",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "claude-optimizer": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "cli": "node dist/cli.js",
+    "start": "npm run build && node dist/cli.js"
+  },
+  "keywords": [
+    "claude",
+    "ai",
+    "optimizer",
+    "calendar",
+    "automation"
+  ],
+  "author": "Jordan Hill",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.1.0",
+    "better-sqlite3": "^11.0.0",
+    "chalk": "^5.3.0",
+    "commander": "^12.0.0",
+    "inquirer": "^9.2.0",
+    "ora": "^8.0.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/inquirer": "^9.0.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0",
+    "@vitest/ui": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
