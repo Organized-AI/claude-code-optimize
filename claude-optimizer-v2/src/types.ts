@@ -102,3 +102,74 @@ export interface ObjectiveRow {
   objective: string;
   order_index: number;
 }
+
+/**
+ * Calendar integration types (Session 2)
+ */
+
+/**
+ * Calendar event with session configuration
+ */
+export interface CalendarEvent {
+  id: string;
+  summary: string;
+  description: string;
+  start: Date;
+  end: Date;
+  sessionConfig: SessionConfig;
+}
+
+/**
+ * Session configuration stored in calendar event metadata
+ */
+export interface SessionConfig {
+  projectPath: string;
+  projectName: string;
+  phase: string;
+  model: 'sonnet' | 'opus' | 'haiku';
+  tokenBudget: number;
+  tools: string[];
+  objectives: string[];
+}
+
+/**
+ * User scheduling preferences
+ */
+export interface SchedulePreferences {
+  startDate?: Date;
+  workingHours: {
+    start: number;  // Hour (0-23), e.g., 9 for 9am
+    end: number;    // Hour (0-23), e.g., 17 for 5pm
+  };
+  daysOfWeek: number[];  // 0=Sunday, 1=Monday, ..., 6=Saturday
+  sessionLength: number; // Hours per session (max 5)
+  timezone?: string;     // e.g., 'America/Los_Angeles'
+}
+
+/**
+ * Time slot for scheduling
+ */
+export interface TimeSlot {
+  start: Date;
+  end: Date;
+}
+
+/**
+ * OAuth credentials structure
+ */
+export interface OAuthCredentials {
+  client_id: string;
+  client_secret: string;
+  redirect_uris: string[];
+}
+
+/**
+ * OAuth token storage
+ */
+export interface OAuthToken {
+  access_token: string;
+  refresh_token?: string;
+  scope: string;
+  token_type: string;
+  expiry_date?: number;
+}

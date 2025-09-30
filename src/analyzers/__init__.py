@@ -1,1 +1,0 @@
-# Analyzers module for Claude Code Optimizer

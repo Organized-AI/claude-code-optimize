@@ -1,7 +1,0 @@
-node_modules/
-*.log
-.session_state
-.vercel
-
-# Local Netlify folder
-.netlify

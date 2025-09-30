@@ -200,21 +200,67 @@ export class FileScanner {
         // Extract framework/library info
         const deps = { ...pkg.dependencies, ...pkg.devDependencies };
 
+        // Frontend Frameworks
         if (deps.react) technologies.push('React');
         if (deps.vue) technologies.push('Vue');
         if (deps['@angular/core']) technologies.push('Angular');
-        if (deps.express) technologies.push('Express');
+        if (deps.svelte) technologies.push('Svelte');
+        if (deps['solid-js']) technologies.push('Solid.js');
+        if (deps.preact) technologies.push('Preact');
+
+        // Meta Frameworks
         if (deps.next) technologies.push('Next.js');
         if (deps.nuxt) technologies.push('Nuxt.js');
-        if (deps.svelte) technologies.push('Svelte');
+        if (deps['@remix-run/react']) technologies.push('Remix');
+        if (deps.astro) technologies.push('Astro');
+        if (deps.gatsby) technologies.push('Gatsby');
+        if (deps['@sveltejs/kit']) technologies.push('SvelteKit');
+
+        // Backend Frameworks
+        if (deps.express) technologies.push('Express');
         if (deps.fastify) technologies.push('Fastify');
-        if (deps.nestjs) technologies.push('NestJS');
-        if (deps.typescript) technologies.push('TypeScript');
+        if (deps['@nestjs/core']) technologies.push('NestJS');
+        if (deps.koa) technologies.push('Koa');
+        if (deps.hapi) technologies.push('Hapi');
+        if (deps.trpc || deps['@trpc/server']) technologies.push('tRPC');
+
+        // Build Tools
         if (deps.vite) technologies.push('Vite');
         if (deps.webpack) technologies.push('Webpack');
-        if (deps.jest || deps.vitest) technologies.push('Testing Framework');
+        if (deps.rollup) technologies.push('Rollup');
+        if (deps.esbuild) technologies.push('esbuild');
+        if (deps.turbopack) technologies.push('Turbopack');
+
+        // State Management
+        if (deps.redux || deps['@reduxjs/toolkit']) technologies.push('Redux');
+        if (deps.zustand) technologies.push('Zustand');
+        if (deps.mobx) technologies.push('MobX');
+        if (deps.jotai) technologies.push('Jotai');
+        if (deps.recoil) technologies.push('Recoil');
+
+        // Testing
+        if (deps.jest) technologies.push('Jest');
+        if (deps.vitest) technologies.push('Vitest');
+        if (deps.mocha) technologies.push('Mocha');
+        if (deps.cypress) technologies.push('Cypress');
+        if (deps.playwright) technologies.push('Playwright');
+        if (deps['@testing-library/react']) technologies.push('React Testing Library');
+
+        // ORMs & Databases
         if (deps.prisma || deps['@prisma/client']) technologies.push('Prisma ORM');
         if (deps.sequelize) technologies.push('Sequelize ORM');
+        if (deps.typeorm) technologies.push('TypeORM');
+        if (deps.mongoose) technologies.push('Mongoose');
+        if (deps['drizzle-orm']) technologies.push('Drizzle ORM');
+
+        // Utilities
+        if (deps.typescript) technologies.push('TypeScript');
+        if (deps.tailwindcss) technologies.push('Tailwind CSS');
+        if (deps['@tanstack/react-query']) technologies.push('TanStack Query');
+        if (deps['socket.io']) technologies.push('Socket.IO');
+        if (deps.graphql || deps['@apollo/client']) technologies.push('GraphQL');
+        if (deps.zod) technologies.push('Zod');
+        if (deps.yup) technologies.push('Yup');
       } catch (error) {
         // Ignore parse errors
       }

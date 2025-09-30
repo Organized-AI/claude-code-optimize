@@ -90,19 +90,51 @@ export class ProjectAnalyzer {
 
       let response = '';
       for await (const message of session) {
-        // Process text messages from Claude
-        if ('text' in message && typeof message.text === 'string') {
-          response += message.text;
-          // Show progress dots
-          process.stdout.write('.');
+        // Handle different message types from Claude Agent SDK
+        // The SDK returns messages of type 'assistant' or 'result'
+        if (message.type === 'assistant') {
+          // Assistant message with text content
+          const content = (message as any).content;
+          if (typeof content === 'string') {
+            response += content;
+            process.stdout.write('.');
+          } else if (Array.isArray(content)) {
+            // Content blocks array
+            for (const block of content) {
+              if (block.type === 'text' && block.text) {
+                response += block.text;
+                process.stdout.write('.');
+              }
+            }
+          }
+        } else if (message.type === 'result') {
+          // Final result message
+          const text = (message as any).text || (message as any).content;
+          if (typeof text === 'string') {
+            response += text;
+            process.stdout.write('.');
+          }
         }
       }
       console.log(''); // New line after progress dots
 
+      // If we got a response, parse it; otherwise fall back
+      if (response.trim().length === 0) {
+        throw new Error('No response received from Claude SDK');
+      }
+
       return this.parseClaudeResponse(response);
 
     } catch (error) {
-      console.error('  ⚠️  Claude SDK error, using fallback analysis');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`  ⚠️  Claude SDK error: ${errorMessage}`);
+      console.error('  📊 Using fallback heuristic analysis instead\n');
+
+      // Log full error in debug mode
+      if (process.env.DEBUG) {
+        console.error('Full error:', error);
+      }
+
       // Fallback to basic analysis if SDK fails
       return this.basicAnalysis(metadata);
     }
@@ -203,22 +235,35 @@ Analyze the project thoroughly and provide accurate estimates.
                       response.match(/```\n([\s\S]*?)\n```/);
 
     if (!jsonMatch) {
-      throw new Error('Failed to parse Claude response: No JSON found');
+      if (process.env.DEBUG) {
+        console.error('Response content:', response.substring(0, 500));
+      }
+      throw new Error('No JSON code block found in Claude response. Expected ```json...``` format.');
     }
 
     try {
       const parsed = JSON.parse(jsonMatch[1]);
 
+      // Validate required fields
+      if (typeof parsed.complexity !== 'number' || parsed.complexity < 1 || parsed.complexity > 10) {
+        throw new Error(`Invalid complexity value: ${parsed.complexity}. Expected number between 1-10.`);
+      }
+
+      if (typeof parsed.estimatedHours !== 'number' || parsed.estimatedHours <= 0) {
+        throw new Error(`Invalid estimatedHours value: ${parsed.estimatedHours}. Expected positive number.`);
+      }
+
       return {
         complexity: parsed.complexity,
         estimatedHours: parsed.estimatedHours,
-        reasoning: parsed.reasoning,
-        suggestedPhases: parsed.suggestedPhases,
+        reasoning: parsed.reasoning || 'No reasoning provided',
+        suggestedPhases: parsed.suggestedPhases || [],
         risks: parsed.risks || [],
         technologies: parsed.technologies || []
       };
     } catch (error) {
-      throw new Error(`Failed to parse Claude response: Invalid JSON - ${(error as Error).message}`);
+      const errorMsg = error instanceof Error ? error.message : 'Unknown parsing error';
+      throw new Error(`Failed to parse Claude response JSON: ${errorMsg}`);
     }
   }
 
