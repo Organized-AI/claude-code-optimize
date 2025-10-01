@@ -1373,10 +1373,90 @@ Code Generation: 500-3,000 tokens per response
 🚨 CONTEXT CRITICAL (180k+):         Auto-compact triggered
 ```
 
-**Notification Thresholds**:
-- **50% (90k tokens)**: First context awareness alert
-- **80% (144k tokens)**: Critical - compact or risk losing context
-- **90% (162k tokens)**: Emergency auto-compact triggered
+**Notification Thresholds & Recommended Actions**:
+
+**50% (90k tokens) - CONTEXT CHECKPOINT**
+- **Alert**: "⚡ Context at 50% - Monitor usage and prefer edits"
+- **Recommended Actions**:
+  1. ✅ Continue current task (no immediate action needed)
+  2. 📝 Start using Edit tool instead of Read + Write
+  3. 🔍 Avoid unnecessary file re-reads (reference by path)
+  4. 📊 Run `/context-status` to see breakdown
+  5. 🎯 Plan to compact at 80% if session continues
+- **Expected Time Remaining**: ~2-3 hours before 80% threshold
+- **Compaction**: Not needed yet, but awareness starts
+
+**80% (144k tokens) - CONTEXT DANGER**
+- **Alert**: "🔴 Context at 80% - Compact now to continue: /compact-context"
+- **Recommended Actions** (choose one):
+  1. 🧹 **COMPACT NOW** (Recommended for ongoing work)
+     - Run `/compact-context`
+     - Saves 30-50k tokens (back to ~50-60% usage)
+     - Gains 1-2 more hours of coding time
+     - Takes 30 seconds
+  2. 💾 **SAVE & RESTART** (If quota also high)
+     - Run `/save-and-restart`
+     - Fresh 180k context, keeps quota window
+     - Best when quota is also 70%+ used
+  3. ⏰ **PLAN NEXT SESSION** (If near end of work)
+     - Run `/plan-next-session`
+     - Complete current small task only
+     - Schedule automated next session
+- **Expected Time Remaining**: ~30-45 minutes before emergency
+- **Compaction**: STRONGLY RECOMMENDED
+
+**90% (162k tokens) - CONTEXT CRITICAL**
+- **Alert**: "🚨 Emergency auto-compact triggered - Saving critical context"
+- **Automatic Actions** (system does this for you):
+  1. 🚨 Extract key decisions → handoff file
+  2. 💾 Save current file states
+  3. 🧹 Clear all non-essential context
+  4. 📋 Offer session restart option
+- **Manual Actions Required**:
+  1. 🛑 Stop current task immediately
+  2. 💾 Commit any code changes
+  3. 🔄 Choose restart option: `/save-and-restart`
+  4. 📅 Or plan next session: `/plan-next-session`
+- **Expected Time Remaining**: Minutes until context limit
+- **Compaction**: AUTOMATIC (emergency mode)
+
+### Quick Decision Guide
+
+**When you hit a context threshold, use this flowchart:**
+
+```
+Context Alert Received
+        ↓
+   Check Level
+        ↓
+    ┌───┴───┐
+    │       │
+   50%     80%/90%
+    │       │
+    ↓       ↓
+Continue  Check Quota
+  with      ↓
+ edits   ┌──┴──┐
+         │     │
+      <70%   >70%
+         │     │
+         ↓     ↓
+    /compact  /save-and-restart
+    -context     OR
+      OR     /plan-next-session
+  /save-and
+   -restart
+```
+
+**Decision Matrix:**
+
+| Context | Quota | Time Left | Recommended Action | Command |
+|---------|-------|-----------|-------------------|---------|
+| 50% | Any | 3+ hours | Continue with awareness | None (use edits) |
+| 80% | <70% | 2+ hours | Compact to extend session | `/compact-context` |
+| 80% | >70% | 1+ hours | Save & restart fresh | `/save-and-restart` |
+| 80% | >80% | <1 hour | Plan next session | `/plan-next-session` |
+| 90% | Any | <30 min | Emergency: Save & exit | `/save-and-restart` |
 
 ### Auto-Compaction Strategy
 
@@ -1788,9 +1868,115 @@ osascript -e 'display notification "Context at 80% (144k tokens). Compact now to
 osascript -e 'display notification "Context at 90%! Emergency compaction triggered." with title "🚨 Context Critical"'
 ```
 
+### Real-World Scenarios
+
+**Scenario 1: 50% Context Alert - Continue Coding**
+
+```
+3:30 PM - Context checkpoint reached
+Context: ⚡ MODERATE (92k / 180k, 51%)
+Quota:   💡 MODERATE (95k / 200k, 48%)
+
+Alert: "⚡ Context at 50% - Monitor usage"
+
+Decision: Continue coding, both metrics healthy
+Actions:
+✅ Switch to using Edit tool instead of Read+Write
+✅ Reference files by path when possible
+✅ Avoid re-reading unchanged files
+✅ Continue implementing current feature
+
+Result: Session continues smoothly for 2+ more hours
+```
+
+**Scenario 2: 80% Context, Low Quota - Compact**
+
+```
+4:45 PM - Context danger zone
+Context: 🔴 DANGER (148k / 180k, 82%)
+Quota:   💡 MODERATE (125k / 200k, 63%)
+
+Alert: "🔴 Context at 80% - Compact now"
+
+Decision: Quota still healthy, compact to extend session
+Actions:
+1. Run /context-status (check what can be removed)
+2. Run /compact-context
+3. Compaction frees 42k tokens → back to 59% context
+4. Continue coding with 2 more hours gained
+
+Result: Extended session by compacting, avoided restart
+```
+
+**Scenario 3: 80% Context, High Quota - Save & Restart**
+
+```
+5:15 PM - Both approaching limits
+Context: 🔴 DANGER (152k / 180k, 84%)
+Quota:   ⚠️ DANGER (165k / 200k, 83%)
+
+Alert: "🚨 CRITICAL: Both limits approaching!"
+
+Decision: Both high, fresh start needed
+Actions:
+1. Commit current code changes
+2. Run /save-and-restart
+3. Creates handoff with context
+4. New session starts with fresh context
+5. Quota window preserved (resets at 7:05 PM)
+
+Result: Fresh 180k context, can code until quota reset
+```
+
+**Scenario 4: 80% Context + 80% Quota - Plan Next**
+
+```
+5:20 PM - Both at 80%, end of work session
+Context: 🔴 DANGER (147k / 180k, 82%)
+Quota:   ⚠️ DANGER (162k / 200k, 81%)
+
+Alert: "⚠️ Both context and quota at danger levels"
+
+Decision: Wrap up and plan strategically
+Actions:
+1. Finish current small task (10k tokens)
+2. Run /plan-next-session
+   - Document accomplishments
+   - Set next objectives
+   - Estimate next session: 65k tokens
+3. Schedule auto-start for 7:10 PM
+4. Commit and exit gracefully
+
+Result: Clean handoff, automated next session
+```
+
+**Scenario 5: 90% Context Emergency**
+
+```
+5:45 PM - Emergency compaction triggered
+Context: 🚨 CRITICAL (165k / 180k, 92%)
+Quota:   🔴 CRITICAL (178k / 200k, 89%)
+
+Alert: "🚨 EMERGENCY COMPACT - Saving critical context"
+
+Automatic Actions (system does):
+✅ Extract key decisions to handoff file
+✅ Save current file states
+✅ Clear non-essential context
+✅ Offer restart option
+
+Your Actions:
+1. Commit code immediately
+2. Choose: /save-and-restart
+3. System creates handoff automatically
+4. New session loads with essentials only
+
+Result: Avoided context overflow, preserved critical work
+```
+
 ### Workflow Example
 
-**Session with Context Management**:
+**Full Session with Context Management**:
 
 ```
 2:00 PM - Start Session
@@ -1877,3 +2063,108 @@ Action:  Load handoff, continue work efficiently
 **Advanced**: Maximize both quota and context efficiency
 
 **Result**: Ultra-efficient sessions with zero waste! 🚀
+
+---
+
+## Context Threshold Recommendations - Quick Reference
+
+### At 50% Context (90k tokens)
+**Status**: ⚡ CHECKPOINT
+**Action**: Continue with awareness
+**What to do**:
+- ✅ Keep coding normally
+- 📝 Switch to Edit tool (not Read+Write)
+- 🔍 Reference files by path, don't re-read
+- 📊 Run `/context-status` to check breakdown
+
+**When to use this**: Early warning - no immediate action needed, just awareness
+
+---
+
+### At 80% Context (144k tokens)
+**Status**: 🔴 DANGER
+**Action**: Choose based on quota level
+
+**If quota < 70%** → `/compact-context`
+- 🧹 Frees 30-50k tokens
+- ⏱️ Gains 1-2 more hours
+- ⚡ Takes 30 seconds
+- ✅ Best when you want to keep working
+
+**If quota > 70%** → `/save-and-restart`
+- 🔄 Fresh 180k context
+- 📋 Preserves quota window
+- 💾 Loads handoff for continuity
+- ✅ Best when both limits are high
+
+**If near end of day** → `/plan-next-session`
+- 📅 Document work and plan next
+- ⏰ Schedule auto-start
+- 🎯 Strategic exit
+- ✅ Best when finishing up
+
+**When to use this**: Critical decision point - compact to extend or restart fresh
+
+---
+
+### At 90% Context (162k tokens)
+**Status**: 🚨 EMERGENCY
+**Action**: Automatic compaction + save & exit
+
+**System automatically**:
+- 🚨 Extracts key decisions
+- 💾 Saves file states
+- 🧹 Clears non-essential context
+- 📋 Creates emergency handoff
+
+**You must**:
+1. 🛑 Stop coding immediately
+2. 💾 Commit code changes
+3. 🔄 Run `/save-and-restart`
+4. 📅 Or run `/plan-next-session`
+
+**When to use this**: Last resort - avoid reaching this by acting at 80%
+
+---
+
+## Learning Path
+
+**Session 1-2** (Learning):
+- Observe 50% alerts, notice context growth patterns
+- See how Edit vs Read+Write affects context
+- Understand typical hourly context consumption
+
+**Session 3-5** (Practicing):
+- Proactively run `/context-status` at 50%
+- Practice compacting at 80% before emergency
+- Learn which activities consume more context
+
+**Session 6+** (Mastery):
+- Anticipate 80% threshold based on work type
+- Compact proactively before alerts
+- Balance both quota and context strategically
+- Never hit 90% emergency mode
+
+---
+
+## Key Insights
+
+`★ Context Management Pattern ─────────────────`
+The 50%-80%-90% threshold system mirrors quota tracking intentionally. At 50% you gain awareness, at 80% you make strategic decisions, at 90% the system intervenes. This graduated approach teaches you to manage resources before they become critical - a valuable skill for any rate-limited environment.
+`─────────────────────────────────────────────────`
+
+**Why 80% is the critical threshold**:
+- At 50%: You're informed but not blocked
+- At 80%: You have ~36k tokens left (~30-45 min)
+- At 90%: Emergency mode, minimal options
+
+**The compaction advantage**:
+- Extends sessions by 1-2 hours
+- Preserves your current flow state
+- Avoids context loss from restart
+- Teaches efficient coding patterns
+
+**When to restart vs compact**:
+- **Compact**: Quota healthy, want to keep working
+- **Restart**: Both limits high, natural break point
+- **Plan next**: End of session, strategic exit
