@@ -211,7 +211,7 @@ export class QuotaTracker {
 
   /**
    * Get action recommendation based on quota state
-   * CONSERVATIVE thresholds for hyperawareness
+   * STRATEGIC thresholds with 80% planning trigger
    */
   private getRecommendation(quota: TokenQuota): string {
     const percent = (quota.currentWindow.tokensUsed / quota.limit) * 100;
@@ -222,11 +222,11 @@ export class QuotaTracker {
     }
 
     if (percent > 90) {
-      return `🔴 DANGER: ${remaining.toLocaleString()} tokens remaining (${(100 - percent).toFixed(1)}% left). Complete current task quickly. New sessions will be auto-scheduled. Est. ${Math.floor(remaining / 1500)} tool calls remaining.`;
+      return `🔴 DANGER: ${remaining.toLocaleString()} tokens remaining (${(100 - percent).toFixed(1)}% left). Wrap up current task. Execute scheduled automation. Est. ${Math.floor(remaining / 1500)} tool calls remaining.`;
     }
 
-    if (percent > 75) {
-      return `⚠️ HIGH USAGE: ${remaining.toLocaleString()} tokens available (${(100 - percent).toFixed(1)}% left). Small tasks only (<30k tokens, ~20 tool calls). Consider scheduling larger work.`;
+    if (percent > 80) {
+      return `⚠️ STRATEGIC PLANNING TIME: ${remaining.toLocaleString()} tokens left (${(100 - percent).toFixed(1)}% remaining). Finish small tasks (<15k tokens). PLAN NEXT SESSION NOW - you have enough runway to complete current work and schedule automation. Run: /plan-next-session`;
     }
 
     if (percent > 50) {
@@ -241,12 +241,12 @@ export class QuotaTracker {
       return `🟢 EXCELLENT: ${remaining.toLocaleString()} tokens available (${(100 - percent).toFixed(1)}% left). Any task size OK. Early monitoring active - you'll be notified at 25% usage.`;
     }
 
-    return `🎯 FRESH START: ${remaining.toLocaleString()} tokens available (full quota). Plan your session strategically. Notifications at 10%, 25%, 50%, 75%, 90%, 95% usage.`;
+    return `🎯 FRESH START: ${remaining.toLocaleString()} tokens available (full quota). Plan your session strategically. Notifications at 10%, 25%, 50%, 80%, 90%, 95% usage.`;
   }
 
   /**
    * Check quota and send warnings at thresholds
-   * HYPERAWARE: 10%, 25%, 50%, 75%, 90%, 95%
+   * STRATEGIC: 10%, 25%, 50%, 80%, 90%, 95%
    */
   private checkQuotaWarnings(quota: TokenQuota): void {
     const percent = (quota.currentWindow.tokensUsed / quota.limit) * 100;
@@ -286,21 +286,21 @@ export class QuotaTracker {
       (quota as any).lastWarningPercent = 50;
     }
 
-    // 75% - Caution zone
-    if (percent >= 75 && lastWarning < 75) {
+    // 80% - Strategic planning trigger (NEW!)
+    if (percent >= 80 && lastWarning < 80) {
       this.sendNotification(
-        '⚠️ 75% Quota Used',
-        `${remaining.toLocaleString()} tokens left (25% remaining). Small tasks only. Consider scheduling larger work. Burn: ${burnRate}/min.`,
+        '⚠️ 80% Quota Used - STRATEGIC PLANNING TIME',
+        `${remaining.toLocaleString()} tokens left (~${Math.floor(remaining / (parseInt(burnRate) || 600))} mins at current pace). Time to plan next session! Run: /plan-next-session`,
         'high'
       );
-      (quota as any).lastWarningPercent = 75;
+      (quota as any).lastWarningPercent = 80;
     }
 
     // 90% - Danger zone
     if (percent >= 90 && lastWarning < 90) {
       this.sendNotification(
         '🚨 90% Quota Used - DANGER',
-        `Only ${remaining.toLocaleString()} tokens left! Wrap up current task. Rate limit approaching. ~${Math.floor(remaining / 1500)} tool calls left.`,
+        `Only ${remaining.toLocaleString()} tokens left! Wrap up current task. Execute scheduled automation. ~${Math.floor(remaining / 1500)} tool calls left.`,
         'critical'
       );
       (quota as any).lastWarningPercent = 90;

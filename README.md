@@ -22,13 +22,15 @@ Foundational systems for the dual-path AI strategy:
 - **Provider Integrations**: API connections and intelligent routing
 - **[Unified Monitor](./UNIFIED_MONITOR_SETUP.md)**: Real-time tracking of both Claude Code & Desktop usage
 
-### 📚 [`docs/`](./docs/) - Comprehensive Documentation
-Complete guides and technical documentation:
-- **Getting Started**: Installation and setup guides
-- **User Guides**: Best practices and optimization strategies
-- **Technical**: Architecture and implementation details
-- **Integration**: External tool and service connections
-- **Community**: Contributing guidelines and success stories
+### 📚 [`claude-optimizer-v2/docs/`](./claude-optimizer-v2/docs/) - Comprehensive Documentation
+Complete guides and technical documentation organized by topic:
+- **[Getting Started](./claude-optimizer-v2/docs/guides/GETTING_STARTED_GUIDE.md)**: Beginner-friendly onboarding for quota-aware development
+- **[User Guides](./claude-optimizer-v2/docs/guides/)**: Hyperaware monitoring, quota system, native workflows
+- **[Architecture](./claude-optimizer-v2/docs/architecture/)**: System design, comparisons, visual diagrams
+- **[Planning](./claude-optimizer-v2/docs/planning/)**: Implementation plans, automation orchestration
+- **[Sessions](./claude-optimizer-v2/docs/sessions/)**: Session prompts and handoff templates
+
+📖 **[Full Documentation Index](./claude-optimizer-v2/docs/README.md)**
 
 ### 🧪 [`development/`](./development/) - Source Code & Tools
 Development environment and implementation:
