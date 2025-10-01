@@ -8,12 +8,39 @@
 
 ---
 
+## 📚 Document Navigation
+
+This orchestration guide connects three key documents:
+
+1. **[AGENTS.md](AGENTS.md)** - Developer guidance and session planning framework
+   - See "Session Planning Framework" section for active session list
+   - See "Planned Implementation Sessions" for links to each plan
+   - See "Standard Operating Procedure" for workflow
+
+2. **[IMPLEMENTATION_GAP_ANALYSIS.md](IMPLEMENTATION_GAP_ANALYSIS.md)** - Gap analysis
+   - What's implemented vs what's documented
+   - 22 missing features across 6 categories
+   - Detailed build specifications
+
+3. **Session Plans** (detailed blueprints for each session):
+   - **[SESSION_5_PLAN.md](claude-optimizer-v2/SESSION_5_PLAN.md)** - Context Window Monitoring
+   - **[SESSION_6A_PLAN.md](claude-optimizer-v2/SESSION_6A_PLAN.md)** - Token Estimation ML
+   - **[SESSION_6B_PLAN.md](claude-optimizer-v2/SESSION_6B_PLAN.md)** - Automation Scripts
+   - **[SESSION_7_PLAN.md](claude-optimizer-v2/SESSION_7_PLAN.md)** - Session Memory System
+
+**Workflow**: Start here → Pick session → Read detailed plan → Execute prompt
+
+---
+
 ## 🎯 SESSION 5: Context Window Monitoring System
 
+**Full Plan**: [SESSION_5_PLAN.md](claude-optimizer-v2/SESSION_5_PLAN.md)
 **Status**: 🔴 CRITICAL PRIORITY
 **Completion**: 0% → 85%
 **Estimated**: 45-65k tokens, 3-4 hours
 **Can Run in Parallel**: No (foundational - must complete first)
+
+> **Note**: The detailed plan contains comprehensive token estimates, phase breakdowns, code examples, and risk analysis. This section provides the quick-start prompt. For full details, open SESSION_5_PLAN.md.
 
 ### Pre-Session Setup
 
@@ -44,8 +71,9 @@ You are implementing SESSION 5: Context Window Monitoring System for Claude Code
 - Both can limit coding independently
 
 **Reference Documents**:
-- Read: IMPLEMENTATION_GAP_ANALYSIS.md (what to build)
-- Read: AUTOMATED_SESSION_ORCHESTRATION_PLAN.md Section 8 (specifications)
+- Read: [SESSION_5_PLAN.md](claude-optimizer-v2/SESSION_5_PLAN.md) (this session's detailed plan)
+- Read: [IMPLEMENTATION_GAP_ANALYSIS.md](IMPLEMENTATION_GAP_ANALYSIS.md) (what to build)
+- Read: [AUTOMATED_SESSION_ORCHESTRATION_PLAN.md](claude-optimizer-v2/docs/planning/AUTOMATED_SESSION_ORCHESTRATION_PLAN.md) Section 8 (specifications)
 - Pattern: src/quota-tracker.ts (follow this structure)
 
 **Your Task**: Build the complete context window monitoring system.
@@ -194,9 +222,12 @@ These are independent and don't share code.
 
 ## 📋 SESSION 6A: Token Estimation ML System
 
+**Full Plan**: [SESSION_6A_PLAN.md](claude-optimizer-v2/SESSION_6A_PLAN.md)
 **Agent**: General-purpose
 **Estimated**: 55-75k tokens, 3-4 hours
 **Prerequisites**: SESSION 5 complete (needs context tracking for full picture)
+
+> **Note**: See SESSION_6A_PLAN.md for detailed token estimates, ML model specifications, and complete implementation guide.
 
 ### Session Start Prompt
 
@@ -206,9 +237,10 @@ You are implementing SESSION 6A: Token Estimation ML System for Claude Code Opti
 **Context**: We now have dual tracking (quota + context). The next layer is predictive: estimate token usage for planned sessions and learn from actual usage to improve accuracy over time (72% → 95%).
 
 **Reference Documents**:
-- Read: IMPLEMENTATION_GAP_ANALYSIS.md Section "Token Estimation ML System"
-- Read: AUTOMATED_SESSION_ORCHESTRATION_PLAN.md Section 7
-- Read: SESSION_3_PLAN.md (example session with token estimates)
+- Read: [SESSION_6A_PLAN.md](claude-optimizer-v2/SESSION_6A_PLAN.md) (this session's detailed plan)
+- Read: [IMPLEMENTATION_GAP_ANALYSIS.md](IMPLEMENTATION_GAP_ANALYSIS.md) Section "Token Estimation ML System"
+- Read: [AUTOMATED_SESSION_ORCHESTRATION_PLAN.md](claude-optimizer-v2/docs/planning/AUTOMATED_SESSION_ORCHESTRATION_PLAN.md) Section 7
+- Read: [SESSION_3_PLAN.md](claude-optimizer-v2/SESSION_3_PLAN.md) (example session with token estimates)
 
 **Your Task**: Build the token estimation and learning system.
 
@@ -307,9 +339,12 @@ Ready to build SESSION 6A?
 
 ## 📋 SESSION 6B: Automation Scripts (PARALLEL with 6A)
 
+**Full Plan**: [SESSION_6B_PLAN.md](claude-optimizer-v2/SESSION_6B_PLAN.md)
 **Agent**: General-purpose
 **Estimated**: 35-50k tokens, 2-3 hours
 **Prerequisites**: SESSION 5 complete (needs handoff system)
+
+> **Note**: See SESSION_6B_PLAN.md for shell script specifications, launchd configuration details, and integration patterns.
 
 ### Session Start Prompt
 
@@ -319,8 +354,9 @@ You are implementing SESSION 6B: Automated Session Launch for Claude Code Optimi
 **Context**: We have handoff files that preserve context between sessions. Now we need automation to launch sessions at scheduled times (e.g., when quota resets) with zero manual intervention.
 
 **Reference Documents**:
-- Read: IMPLEMENTATION_GAP_ANALYSIS.md Section "Automated Session Launch"
-- Read: AUTOMATED_SESSION_ORCHESTRATION_PLAN.md Section 3
+- Read: [SESSION_6B_PLAN.md](claude-optimizer-v2/SESSION_6B_PLAN.md) (this session's detailed plan)
+- Read: [IMPLEMENTATION_GAP_ANALYSIS.md](IMPLEMENTATION_GAP_ANALYSIS.md) Section "Automated Session Launch"
+- Read: [AUTOMATED_SESSION_ORCHESTRATION_PLAN.md](claude-optimizer-v2/docs/planning/AUTOMATED_SESSION_ORCHESTRATION_PLAN.md) Section 3
 - Read: src/handoff-manager.ts (handoff integration point)
 
 **Your Task**: Build shell automation for scheduled session starts.
@@ -397,11 +433,14 @@ Ready to build SESSION 6B?
 
 ## 🎯 SESSION 7: Session Memory System
 
+**Full Plan**: [SESSION_7_PLAN.md](claude-optimizer-v2/SESSION_7_PLAN.md)
 **Status**: 🟢 MEDIUM PRIORITY
 **Completion**: 0% → 90%
 **Estimated**: 40-55k tokens, 2.5-3 hours
 **Prerequisites**: SESSION 5, 6A, 6B complete
 **Can Run in Parallel**: No (integrates with previous systems)
+
+> **Note**: See SESSION_7_PLAN.md for memory architecture, tech stack detection logic, and context injection specifications.
 
 ### Session Start Prompt
 
@@ -411,8 +450,9 @@ You are implementing SESSION 7: Session Memory System for Claude Code Optimizer 
 **Context**: We now have context tracking, token estimation, and automation. The final layer is memory: preserve cumulative project knowledge across sessions so each new session starts with full historical context.
 
 **Reference Documents**:
-- Read: IMPLEMENTATION_GAP_ANALYSIS.md Section "Session Memory System"
-- Read: AUTOMATED_SESSION_ORCHESTRATION_PLAN.md Section 5
+- Read: [SESSION_7_PLAN.md](claude-optimizer-v2/SESSION_7_PLAN.md) (this session's detailed plan)
+- Read: [IMPLEMENTATION_GAP_ANALYSIS.md](IMPLEMENTATION_GAP_ANALYSIS.md) Section "Session Memory System"
+- Read: [AUTOMATED_SESSION_ORCHESTRATION_PLAN.md](claude-optimizer-v2/docs/planning/AUTOMATED_SESSION_ORCHESTRATION_PLAN.md) Section 5
 
 **Your Task**: Build the session memory and context injection system.
 
@@ -589,13 +629,52 @@ After all sessions complete:
 
 **To build everything in order:**
 
-1. Copy SESSION 5 prompt above
-2. Start new Claude Code session
-3. Paste prompt
-4. Let agent build context tracking system
-5. When complete, copy SESSION 6A + 6B prompts
-6. Run in parallel (two sessions or Task tool)
-7. When both complete, copy SESSION 7 prompt
-8. Build memory system
+1. **Review Planning**: Open [AGENTS.md](AGENTS.md) → "Planned Implementation Sessions"
+2. **Read Detailed Plan**: Open [SESSION_5_PLAN.md](claude-optimizer-v2/SESSION_5_PLAN.md)
+3. **Copy Prompt**: Copy the "Session Start Prompt" from above or from SESSION_5_PLAN.md
+4. **Start Session**: New Claude Code session → Paste prompt
+5. **Let Agent Build**: Context tracking system complete
+6. **Repeat for 6A + 6B**: Run in parallel (see Parallel Execution Guide)
+7. **Finish with 7**: Session memory integration
 
 **Result**: Complete Claude Code Optimizer v2.0 with all documented features implemented.
+
+---
+
+## 📖 How Documents Connect
+
+```
+AGENTS.md (Developer Guide)
+    ↓
+"Session Planning Framework" section
+    ↓
+Lists: SESSION_5, SESSION_6A, SESSION_6B, SESSION_7
+    ↓
+Links to detailed plans ──────────┐
+                                  │
+BUILD_ORCHESTRATION_PROMPT.md ←───┤
+(Quick-start prompts)             │
+    ↓                             │
+SESSION_N_PLAN.md ←───────────────┘
+(Comprehensive blueprints)
+    ↓
+Contains:
+- Token estimates by phase
+- TypeScript code examples
+- Success criteria
+- Risk analysis
+- Copy-paste prompts
+```
+
+**Navigation Path**:
+1. Start: [AGENTS.md](AGENTS.md) - See what's planned
+2. Orient: [IMPLEMENTATION_GAP_ANALYSIS.md](IMPLEMENTATION_GAP_ANALYSIS.md) - Understand gaps
+3. Quick Start: This file (BUILD_ORCHESTRATION_PROMPT.md) - Get prompts
+4. Deep Dive: SESSION_N_PLAN.md files - Read full specifications
+5. Execute: Copy prompt → Paste → Build
+
+**Update After Each Session**:
+- Mark session complete in [AGENTS.md](AGENTS.md) (📋 → ✅)
+- Create SESSION_N_HANDOFF.md with results
+- Update completion % in [IMPLEMENTATION_GAP_ANALYSIS.md](IMPLEMENTATION_GAP_ANALYSIS.md)
+- Commit: `git commit -m "feat: Complete Session N"`
