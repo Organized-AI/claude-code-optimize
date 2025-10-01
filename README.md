@@ -1,234 +1,274 @@
-# Claude Code Optimizer: Professional AI Development Suite
+# Claude Code Optimizer v2.0
+
+**Intelligent session management for strategic Claude Code development**
 
 ## 🎯 Mission
-Transform Claude users into **Vibe Coders** - developers who never hit AI rate limits, always have backup providers ready, and leverage autonomous sub-agents to maximize productivity while minimizing costs.
 
-**Core Philosophy**: *"The best developers don't just code fast—they code strategically."*
+Help developers maximize productivity with Claude Code through **quota-aware monitoring**, **automated session orchestration**, and **token estimation with machine learning**.
+
+**Core Philosophy**: *"Strategic planning over speed. With 5-hour sessions and 200k token quotas, make every token count."*
+
+> 📖 **For AI Agents**: See [AGENTS.md](AGENTS.md) for development guidelines and project structure
 
 ## 🏗️ Project Structure
 
-### 🤖 [`agents/`](./agents/) - Specialized AI Agents
-Autonomous agents for intelligent development coordination:
-- **Infrastructure**: Core system management (quota, routing, sessions, cost, emergency)
-- **Development**: Workflow automation (planning, analysis, review, testing, docs)
-- **Coordination**: Advanced orchestration (calendar, team, performance, workflow)
-- **Specialized**: Domain expertise (AI/ML, security, deployment, UX)
-
-### ⚙️ [`systems/`](./systems/) - Core Infrastructure
-Foundational systems for the dual-path AI strategy:
-- **Menu Bar App**: Real-time quota monitoring and session management
-- **Multi-Config**: Seamless provider switching (Claude ↔ OpenRouter)
-- **Usage Tracker**: Cross-platform token monitoring and analytics
-- **Provider Integrations**: API connections and intelligent routing
-- **[Unified Monitor](./UNIFIED_MONITOR_SETUP.md)**: Real-time tracking of both Claude Code & Desktop usage
-
-### 📚 [`claude-optimizer-v2/docs/`](./claude-optimizer-v2/docs/) - Comprehensive Documentation
-Complete guides and technical documentation organized by topic:
-- **[Getting Started](./claude-optimizer-v2/docs/guides/GETTING_STARTED_GUIDE.md)**: Beginner-friendly onboarding for quota-aware development
-- **[User Guides](./claude-optimizer-v2/docs/guides/)**: Hyperaware monitoring, quota system, native workflows
-- **[Architecture](./claude-optimizer-v2/docs/architecture/)**: System design, comparisons, visual diagrams
-- **[Planning](./claude-optimizer-v2/docs/planning/)**: Implementation plans, automation orchestration
-- **[Sessions](./claude-optimizer-v2/docs/sessions/)**: Session prompts and handoff templates
-
-📖 **[Full Documentation Index](./claude-optimizer-v2/docs/README.md)**
-
-### 🧪 [`development/`](./development/) - Source Code & Tools
-Development environment and implementation:
-- **Source Code**: Agent implementations and system code
-- **Tests**: Comprehensive testing suites
-- **Tools**: Development utilities and generators
-- **Environments**: Configuration for different deployment stages
-
-### 📦 [`deployments/`](./deployments/) - Configuration & Distribution
-Ready-to-deploy configurations and installers:
-- **Configurations**: OpenRouter, Goose Desktop, Claude Code Router setups
-- **Installers**: macOS, Homebrew, and GitHub releases
-- **Docker**: Containerization for complex deployments
-- **Automation**: CI/CD and deployment monitoring
-
-### 🎯 [`examples/`](./examples/) - Practical Workflows
-Real-world usage scenarios and configuration examples:
-- **Workflows**: Complete development workflow examples
-- **Configurations**: Setup examples for different use cases
-- **Use Cases**: Industry-specific and role-specific patterns
-
-## 🎪 The Dual-Path Strategy
-
-Never lose access to AI assistance through intelligent provider switching:
-
-### **Primary Path (Claude Max Plan)**
-- **Chat Interface**: Claude Desktop → Anthropic Direct (480h Sonnet, 40h Opus weekly)
-- **Agentic Coding**: Claude Code → Anthropic Direct (5-hour sessions)
-
-### **Fallback Path (OpenRouter)**
-- **Chat Interface**: Goose Desktop → OpenRouter API (unlimited, pay-per-use)
-- **Agentic Coding**: Claude Code Router → OpenRouter API (same interface, different backend)
-
-### **Intelligent Switching**
-- **Automatic triggers**: Quota thresholds, cost limits, API failures
-- **Context preservation**: Seamless transitions with zero information loss
-- **Cost optimization**: Always use the most efficient model for each task
-- **Emergency protocols**: Instant failover during critical situations
-
-## 📊 Real-time Monitoring
-
-### **Unified Claude Monitoring System** ✨ NEW
-Track both Claude Code (CLI) and Claude Desktop (App) usage in real-time:
-
-```bash
-# Quick start monitoring
-cd "Claude Code Optimizer"
-./monitors/unified-claude-monitor.sh
+```
+claude-optimizer-v2/          # All active development
+├── src/                      # TypeScript source code
+│   ├── quota-tracker.ts      # Rolling 5-hour window management
+│   ├── session-monitor.ts    # Real-time JSONL watching
+│   ├── smart-session-planner.ts  # Intelligent scheduling
+│   └── types/                # TypeScript type definitions
+├── .claude/
+│   └── commands/             # Slash commands
+│       ├── session-status
+│       ├── start-next-session
+│       └── create-calendar-events
+├── docs/                     # All documentation
+│   ├── guides/               # User guides
+│   ├── architecture/         # System design
+│   ├── planning/             # Implementation plans
+│   └── sessions/             # Session templates
+└── tests/                    # Test suites
 ```
 
-**Features:**
-- 📝 Full JSONL message tracking from Claude Code
-- 🖥️ Activity detection for Claude Desktop
-- ⚙️ Process monitoring for both applications
-- 📈 Real-time dashboard integration
-- 📁 Complete setup guide: [UNIFIED_MONITOR_SETUP.md](./UNIFIED_MONITOR_SETUP.md)
+## ✨ Key Features
+
+### 1. Hyperaware Quota Tracking
+
+**6 notification thresholds** for maximum visibility (10%, 25%, 50%, 75%, 80%, 90%, 95%):
+
+```
+🎯 FRESH (0-10%):      Plan strategically
+🟢 EXCELLENT (10-25%): Any task OK
+✅ GOOD (25-50%):      Large tasks (60-80k tokens)
+💡 MODERATE (50-80%):  Medium tasks (30-60k tokens)
+⚠️ DANGER (80-90%):    START PLANNING next session
+🔴 CRITICAL (90-95%):  Wrap up current task
+🚨 EMERGENCY (95%+):   Save immediately
+```
+
+**Real-time metrics**:
+- Burn rate tracking (tokens/min)
+- Estimated runway (time + tool calls remaining)
+- Next alert predictions
+
+### 2. Token Estimation with Machine Learning
+
+Learns from each session to improve accuracy:
+
+```
+Session 1: ~72% accuracy (establishing baseline)
+Session 3: ~94% accuracy (learning patterns)
+Session 5: Target 95%+ (expert predictions)
+```
+
+**Features**:
+- Task-based estimates (planning, implementation, testing, etc.)
+- Complexity multipliers (project size, tech stack familiarity)
+- Real-time variance tracking
+- Post-session analysis reports
+- Automatic model updates
+
+### 3. Automated Session Orchestration
+
+**80% Strategic Planning Trigger**: When quota hits 80%, system prompts you to plan the next session instead of blocking at 90%.
+
+**Session Handoff System**:
+- Markdown files preserve perfect context
+- What was accomplished
+- Current state (branch, tests, commits)
+- Next session objectives with token estimates
+- Key decisions and context
+
+**Auto-Launch**:
+- Schedule sessions to start automatically at quota reset
+- launchd/cron integration for macOS
+- Desktop notifications (5 mins before)
+- Zero setup time - full context loaded
+
+### 4. Session Memory
+
+**Perfect context preservation**:
+- Project tech stack and architecture
+- All previous session accomplishments
+- Design decisions and their rationale
+- Cumulative knowledge across sessions
 
 ## 🚀 Quick Start
 
-### 1. **Installation**
-```bash
-# Clone the project
-git clone https://github.com/organized-ai/claude-code-optimizer.git
-cd claude-code-optimizer
+### Installation
 
-# Set up environment
-./deployments/configurations/setup.sh
+```bash
+# Clone the repository
+git clone https://github.com/Organized-AI/claude-code-optimize.git
+cd claude-code-optimize/claude-optimizer-v2
+
+# Install dependencies
+npm install
+
+# Build TypeScript
+npm run build
 ```
 
-### 2. **Configuration**
-```bash
-# Add your API keys
-cp deployments/configurations/.env.example .env
-# Edit .env with: ANTHROPIC_API_KEY, OPENROUTER_API_KEY
+### First Session
 
-# Configure providers
-./deployments/configurations/setup.sh --configure
+```bash
+# Check your quota status
+/session-status
+
+# Start an interactive session
+/start-next-session
 ```
 
-### 3. **Launch Systems**
-```bash
-# Start menu bar app (macOS)
-open systems/menubar-app/build/Claude-Quota-Tracker.app
+### Basic Workflow
 
-# Verify dual-path setup
-./deployments/configurations/verify-setup.sh
+```
+1. Check status before starting → /session-status
+2. Work on your project with Claude Code
+3. At 80% quota → /plan-next-session
+4. Schedule automation for quota reset
+5. Take a break, let automation handle restart
+6. Come back, session auto-starts with full context
 ```
 
-### 4. **First Development Session**
-Follow the [New Project Setup Guide](./examples/workflows/new-project-setup.md) for a complete walkthrough.
+## 📊 Example Session
 
-## 🤖 Agent System Overview
+**2:00 PM - Start Session**
+```
+Status: 🎯 FRESH (0%, 200k tokens)
+Action: Begin planning phase
+```
 
-The agent system provides autonomous coordination for all aspects of AI-optimized development:
+**3:30 PM - Quarter Progress**
+```
+Alert:  📈 25% Used
+Status: ✅ GOOD (150k remaining)
+Action: Continue implementation
+```
 
-### **Core Infrastructure Agents**
-- **[quota-monitor](./agents/infrastructure/quota-monitor.md)**: Real-time quota tracking and predictive management
-- **[emergency-responder](./agents/coordination/emergency-responder.md)**: Crisis management and rapid recovery
-- **[task-planner](./agents/development/task-planner.md)**: Intelligent project decomposition and optimization
+**5:30 PM - Strategic Planning**
+```
+Alert:  ⚠️ 80% Used - STRATEGIC PLANNING TIME
+Status: 40k tokens remaining (~27 mins at current pace)
+Action: /plan-next-session
 
-### **Intelligent Coordination**
-Agents work together to provide:
-- 🔄 **Seamless provider switching** with context preservation
-- 📊 **Predictive quota management** to prevent surprises
-- 💰 **Cost optimization** across all AI providers
-- 🚨 **Emergency response** for critical situations
-- 📅 **Session planning** optimized for 5-hour limits
+System:
+  → Creates handoff markdown
+  → Schedules 6:05 PM auto-start
+  → Creates calendar event with reminders
+```
 
-## 📊 Success Metrics
+**5:35 PM - Safe Stop**
+```
+Status: Work saved, automation ready
+Action: Close session, take a break
+```
 
-### **User Experience Goals**
-- ✅ **Zero quota surprises**: 100% proactive alert success rate
-- ✅ **Seamless switching**: <30 seconds provider transition time
-- ✅ **Cost optimization**: 50% reduction in overflow API costs
-- ✅ **Productivity gain**: 3x faster development with agent assistance
+**6:00 PM - Reminder**
+```
+Notification: "🤖 Session starts in 5 minutes!"
+```
 
-### **Technical Performance**
-- ✅ **Real-time accuracy**: 99%+ quota tracking precision
-- ✅ **System reliability**: 99.9% uptime across all components
-- ✅ **Context preservation**: 99%+ accuracy in provider switches
-- ✅ **Resource efficiency**: <5% system overhead
+**6:05 PM - Auto-Launch**
+```
+Terminal opens automatically
+Claude starts with full context
+Zero setup time!
+```
 
-## 🛠️ Technical Architecture
+## 📚 Documentation
 
-### **Native macOS Integration**
-- **Menu Bar App**: Swift/SwiftUI with real-time system integration
-- **System Hooks**: Direct Claude Desktop and Claude Code monitoring
-- **Local Database**: Encrypted SQLite for usage history and patterns
+**For Users**:
+- [Getting Started Guide](claude-optimizer-v2/docs/guides/GETTING_STARTED_GUIDE.md) - Beginner-friendly onboarding
+- [Hyperaware Mode](claude-optimizer-v2/docs/guides/HYPERAWARE_MODE.md) - Understanding quota thresholds
+- [Quota System](claude-optimizer-v2/docs/guides/QUOTA_AWARE_SYSTEM.md) - Technical reference
 
-### **Multi-Provider API Management**
-- **Anthropic Integration**: Direct Max Plan API with quota tracking
-- **OpenRouter Integration**: 50+ model access with cost optimization
-- **Intelligent Routing**: AI-powered provider selection and failover
-- **Context Bridges**: Seamless state preservation across switches
+**For Developers**:
+- [AGENTS.md](AGENTS.md) - Development guidelines and patterns
+- [Automation Plan](claude-optimizer-v2/docs/planning/AUTOMATED_SESSION_ORCHESTRATION_PLAN.md) - Complete system architecture
+- [Visual Architecture](claude-optimizer-v2/docs/architecture/VISUAL_ARCHITECTURE.md) - System diagrams
 
-### **Agent Coordination Framework**
-- **Message Bus**: Real-time inter-agent communication
-- **State Synchronization**: Unified system state across all agents
-- **Task Orchestration**: Intelligent workload distribution
-- **Performance Monitoring**: Real-time agent efficiency tracking
+**Full Documentation Index**: [claude-optimizer-v2/docs/README.md](claude-optimizer-v2/docs/README.md)
+
+## 🛠️ Development
+
+### Tech Stack
+- **TypeScript** - Type-safe session management
+- **Node.js** 18+ - Runtime environment
+- **macOS** - Native integration (launchd, osascript)
+- **SQLite** - Local session history
+- **JSON** - File-based state management
+
+### Key Commands
+
+```bash
+# Development
+cd claude-optimizer-v2
+npm run build              # Compile TypeScript
+npm test                   # Run tests
+npm run build:watch        # Watch mode
+
+# Slash commands (in Claude Code)
+/session-status            # Check quota & session
+/start-next-session        # Interactive starter
+/create-calendar-events    # Export to calendar
+```
+
+### Testing
+
+```bash
+# All tests
+npm test
+
+# Specific module
+npm test quota-tracker
+
+# Watch mode
+npm test -- --watch
+```
+
+## 🎯 Roadmap
+
+### ✅ Completed
+- Hyperaware quota tracking (6 thresholds)
+- Token estimation baseline
+- Session monitoring via JSONL
+- Slash commands implementation
+- Complete documentation
+
+### 🔄 In Progress
+- Automated session orchestration
+- Session handoff system
+- Calendar integration with auto-launch
+- Machine learning model refinement
+
+### 📋 Planned
+- 95%+ token estimation accuracy
+- Multi-project support
+- Team collaboration features
+- Cross-platform support (Windows, Linux)
 
 ## 🤝 Contributing
 
-### **Getting Started**
-1. Review the [Contributing Guide](./docs/community/contributing.md)
-2. Check the [Development Setup](./development/README.md)
-3. Explore the [Agent Framework](./agents/README.md)
-4. Join the [Vibe Coders Community](https://discord.gg/vibe-coders)
-
-### **Priority Development Areas**
-- 🔥 **Menu Bar App**: Native macOS development (Swift/SwiftUI)
-- 🔥 **Agent System**: Python coordination and AI integration
-- 🔥 **Provider Switching**: Seamless context preservation
-- 🔥 **Documentation**: User guides and tutorials
-
-## 🔮 Future Vision
-
-### **Short-term (3 months)**
-- ✅ Complete menu bar app with real-time monitoring
-- ✅ Seamless dual-path provider switching
-- ✅ Core agent coordination system
-- ✅ Community adoption among Claude power users
-
-### **Medium-term (6 months)**
-- 🎯 Advanced predictive quota management
-- 🎯 Team coordination and organization features
-- 🎯 Integration with popular development tools
-- 🎯 Cross-platform support (Windows, Linux)
-
-### **Long-term (1 year)**
-- 🚀 Fully autonomous AI development teams
-- 🚀 Enterprise organization management
-- 🚀 AI development workflow standardization
-- 🚀 Industry-wide adoption and ecosystem
-
-## 📞 Support & Community
-
-- 📚 **Documentation**: Comprehensive guides in [`docs/`](./docs/)
-- 💬 **Community**: [Vibe Coders Discord](https://discord.gg/vibe-coders)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/organized-ai/claude-code-optimizer/issues)
-- 💡 **Discussions**: [GitHub Discussions](https://github.com/organized-ai/claude-code-optimizer/discussions)
+We welcome contributions! See [AGENTS.md](AGENTS.md) for:
+- Development setup
+- Code style guidelines
+- Testing requirements
+- Commit message format
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
----
-
 ## 🙏 Acknowledgments
 
-- **Anthropic** - For Claude's exceptional development capabilities
-- **OpenRouter** - For providing access to multiple AI providers  
-- **Goose Desktop** - For open-source AI desktop interface
-- **Contains Studio** - For inspiring professional agent organization
-- **Vibe Coder Community** - For feedback and real-world testing
+- **Anthropic** - For Claude Code's exceptional development capabilities
+- **Claude Community** - For feedback and real-world testing
+- **Early Adopters** - For validating the quota-aware approach
 
 ---
 
-*Built with ❤️ by the Organized AI team and the Vibe Coder community*
+**Built to help developers work strategically within Claude Code's natural limits** 🚀
 
-**Remember**: With weekly rate limits, precision beats speed. This toolkit ensures you maximize every token and never hit a wall. 🚀
+*Remember: With 5-hour sessions and token quotas, precision beats speed. This tool ensures you maximize every token and never hit a wall.*
