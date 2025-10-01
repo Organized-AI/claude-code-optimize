@@ -1319,3 +1319,561 @@ Recommendation: Start with Task A
 4. **Start implementation** - Phase 1 is quick to build
 
 Ready to build this? 🚀
+
+---
+
+## 8. Context Window Monitoring & Auto-Compaction
+
+**Purpose**: Track conversation context size and proactively compact before hitting limits, similar to token quota management.
+
+### Why Context Matters Differently Than Quotas
+
+**Token Quota**: Rolling 5-hour window, resets automatically
+**Context Window**: Per-session cumulative, grows with conversation length
+
+**Critical Insight**: You can have:
+- ✅ Quota remaining but context full → Can't continue coding
+- ✅ Context available but quota exhausted → Rate limited
+- ⚠️ Both approaching limits → Strategic planning time!
+
+### Claude Code Context Limits
+
+```
+Model: Claude Sonnet 3.5/4
+Context Window: 200,000 tokens total
+Usable for conversation: ~180,000 tokens (10% buffer)
+```
+
+**Context Consumption Patterns**:
+```
+System Prompt: ~5,000 tokens (agents, tools, env)
+File Reads: 500-5,000 tokens each
+Tool Results: 100-2,000 tokens each
+Conversation: ~100-500 tokens per exchange
+Code Generation: 500-3,000 tokens per response
+```
+
+**Typical Session Context Growth**:
+- Hour 1: 20-30k tokens (setup, file reads, initial work)
+- Hour 2: 40-60k tokens (implementation, edits)
+- Hour 3: 70-100k tokens (refactoring, more file reads)
+- Hour 4: 110-140k tokens (testing, debugging)
+- Hour 5: 150-180k tokens (approaching limit!)
+
+### Context Monitoring Thresholds
+
+**New Alert System (Parallel to Token Quota)**:
+
+```
+🎯 FRESH (0-50k):        Plenty of context. Read files freely
+🟢 HEALTHY (50-90k):     Good context available. Normal operation
+⚡ MODERATE (90-120k):   Monitor context. Prefer edits over re-reads
+⚠️ CONTEXT WARNING (120-144k, 50%):  Start planning compaction strategy
+🔴 CONTEXT DANGER (144-180k, 80%):   COMPACT NOW or risk context limit
+🚨 CONTEXT CRITICAL (180k+):         Auto-compact triggered
+```
+
+**Notification Thresholds**:
+- **50% (90k tokens)**: First context awareness alert
+- **80% (144k tokens)**: Critical - compact or risk losing context
+- **90% (162k tokens)**: Emergency auto-compact triggered
+
+### Auto-Compaction Strategy
+
+#### What Gets Compacted?
+
+**Remove (Safe to discard)**:
+```
+✂️ Old file read results (keep only recent 10)
+✂️ Duplicate tool results
+✂️ Verbose command outputs (git log, npm install)
+✂️ Historical status checks
+✂️ Early conversation exchanges (keep decisions only)
+```
+
+**Preserve (Critical to keep)**:
+```
+✅ Key architectural decisions
+✅ Current file states (last 5-10 edits)
+✅ Active session objectives
+✅ Error messages and solutions
+✅ Handoff context for next session
+✅ Critical code snippets being worked on
+```
+
+#### Compaction Levels
+
+**Level 1: Soft Compact (at 50% / 90k tokens)**
+```
+Action: Clean up redundant tool results
+Expected savings: 10-20k tokens
+Trigger: Automatic, background
+Notification: "🧹 Context cleanup: 15k tokens freed"
+```
+
+**Level 2: Strategic Compact (at 80% / 144k tokens)**
+```
+Action: Remove old file reads, summarize history
+Expected savings: 30-50k tokens
+Trigger: User prompted with options
+Notification: "⚠️ Context at 80% - Compact now? (y/n)"
+
+Options shown:
+1. Auto-compact (recommended): Saves ~40k tokens
+2. Save context & start fresh session: Full reset
+3. Continue carefully: Risk hitting limit
+```
+
+**Level 3: Emergency Compact (at 90% / 162k tokens)**
+```
+Action: Aggressive compaction + session prep
+Expected savings: 60-80k tokens
+Trigger: Automatic emergency mode
+Notification: "🚨 EMERGENCY COMPACT - Saving critical context"
+
+Process:
+1. Extract key decisions → handoff file
+2. Save current file states
+3. Clear all non-essential context
+4. Offer session restart with clean context
+```
+
+### Integration with Session Planning
+
+**Combined Quota + Context Monitoring**:
+
+```
+📊 Session Status at 3:30 PM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 TOKEN QUOTA (Rolling 5-hour)
+Used:     120,000 / 200,000 (60%)
+Status:   💡 MODERATE
+Resets:   5:05 PM (1h 35m)
+
+📝 CONTEXT WINDOW (Session)
+Used:     95,000 / 180,000 (53%)
+Status:   ⚡ MODERATE - Monitor usage
+Action:   Prefer edits over file re-reads
+
+⚡ COMBINED STATUS: HEALTHY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Continue current task. Monitor both metrics.
+```
+
+**Critical State (Both approaching limits)**:
+
+```
+📊 Session Status at 5:15 PM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 TOKEN QUOTA (Rolling 5-hour)
+Used:     165,000 / 200,000 (83%)
+Status:   ⚠️ DANGER - Plan next session
+Resets:   7:05 PM (1h 50m)
+
+📝 CONTEXT WINDOW (Session)
+Used:     152,000 / 180,000 (84%)
+Status:   🔴 DANGER - Compact or restart
+Action:   Critical decisions needed
+
+🚨 CRITICAL: Both limits approaching!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+RECOMMENDED ACTIONS (in order):
+1. 💾 Save current work (commit code)
+2. 📋 Run /plan-next-session (uses ~5k tokens)
+3. 🧹 Run /compact-context (frees ~40k tokens)
+4. ⏰ Schedule next session for 7:10 PM
+5. 🛑 Stop session gracefully
+
+Alternative:
+• /save-and-restart - Fresh context, same quota window
+```
+
+### Context-Aware Planning Triggers
+
+**At 50% Context (90k tokens)**:
+
+```
+⚡ Context Checkpoint (50% / 90k tokens)
+
+Your conversation context is growing. To stay efficient:
+
+✅ GOOD PRACTICES NOW:
+• Use Edit tool (preserves context) over Read + Write
+• Reference files by path, don't re-read unless changed
+• Use grep/glob sparingly
+• Summarize learnings instead of re-discussing
+
+⏭️  NEXT ALERT: 80% (144k tokens)
+
+Continue coding with context awareness!
+```
+
+**At 80% Context (144k tokens)**:
+
+```
+🔴 Context Danger Zone (80% / 144k tokens)
+
+You have ~36k tokens of context remaining (~30-45 minutes).
+
+CHOOSE ACTION:
+
+1. 🧹 COMPACT NOW (Recommended)
+   • Frees ~40k tokens
+   • Keeps current session alive
+   • Takes 30 seconds
+   Run: /compact-context
+
+2. 💾 SAVE & RESTART SESSION
+   • Fresh 180k context
+   • Preserves token quota
+   • Loads handoff context
+   Run: /save-and-restart
+
+3. ⏰ PLAN & SCHEDULE NEXT
+   • If also near quota limit
+   • Complete current task only
+   • Auto-start next session
+   Run: /plan-next-session
+
+Which action? (1-3):
+```
+
+### New Slash Commands
+
+#### `/compact-context`
+
+**Compact conversation context to free up space**:
+
+```bash
+/compact-context
+```
+
+**Interactive Flow**:
+
+```
+🧹 Context Compaction Tool
+
+Current context: 152,000 / 180,000 tokens (84%)
+
+Analyzing conversation...
+
+Found:
+• 45 file read results (15,000 tokens)
+  → Keep recent 10, remove 35 (-12,000 tokens)
+
+• 23 git/npm command outputs (8,000 tokens)
+  → Summarize to decisions only (-7,000 tokens)
+
+• 67 tool results (22,000 tokens)
+  → Remove duplicates and old results (-15,000 tokens)
+
+• 89 conversation exchanges (18,000 tokens)
+  → Keep last 30 + key decisions (-12,000 tokens)
+
+Total potential savings: 46,000 tokens
+
+Compact now? (y/n): y
+
+🔄 Compacting context...
+
+✅ Compaction complete!
+
+Before: 152,000 tokens (84%)
+After:  106,000 tokens (59%)
+Freed:  46,000 tokens
+
+Context preserved:
+✅ All architectural decisions
+✅ Last 10 file states
+✅ Current session objectives
+✅ Error solutions
+✅ Active code being edited
+
+You now have 74,000 tokens available (~1-2 hours more work).
+
+Continue your session!
+```
+
+#### `/save-and-restart`
+
+**Save context and start fresh session (preserves quota)**:
+
+```bash
+/save-and-restart
+```
+
+**Flow**:
+
+```
+💾 Save & Restart Session
+
+This will:
+1. Save current context to handoff file
+2. Exit this session
+3. Start new session with fresh context
+4. Load handoff for continuity
+5. Keep same token quota window
+
+Current status:
+• Token quota: 165k / 200k (still valid until 7:05 PM)
+• Context: 152k / 180k (84% full)
+
+After restart:
+• Token quota: Same (165k / 200k, resets 7:05 PM)
+• Context: Fresh (0k / 180k)
+
+📋 Creating handoff...
+
+What should the new session focus on?
+> Continue API integration work
+
+✅ Handoff created: handoff-restart-1736195844.md
+
+🔄 Restarting session...
+
+[Session ends, new one begins]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 Session Restarted
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Context: Fresh (0 / 180k tokens)
+🎯 Quota: Same window (165k / 200k, resets 7:05 PM)
+📋 Loaded: handoff-restart-1736195844.md
+
+Continuing: API integration work
+
+Let's pick up where we left off!
+```
+
+#### `/context-status`
+
+**Detailed context window analysis**:
+
+```bash
+/context-status
+```
+
+**Output**:
+
+```
+📝 Context Window Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 USAGE SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total Context:    152,000 / 180,000 tokens
+Percentage:       84% used
+Status:           🔴 DANGER - Compact recommended
+Remaining:        28,000 tokens (~25-35 minutes)
+
+📁 CONTEXT BREAKDOWN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+System Prompt:    5,000 tokens   (3%)
+File Reads:       32,000 tokens  (21%) - 45 files
+Tool Results:     28,000 tokens  (18%) - 67 results
+Conversation:     51,000 tokens  (34%) - 89 exchanges
+Code Generated:   36,000 tokens  (24%) - 23 responses
+
+🧹 COMPACTION OPPORTUNITIES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Old file reads:   -12,000 tokens (keep recent 10)
+Duplicate tools:  -15,000 tokens (deduplicate)
+Old exchanges:    -12,000 tokens (keep key decisions)
+Verbose output:   -7,000 tokens  (summarize commands)
+
+Total Savings:    46,000 tokens → 59% usage
+
+⚡ RECOMMENDATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Run /compact-context now (frees 46k tokens)
+2. Avoid re-reading files unnecessarily
+3. Use Edit tool instead of Read + Write
+4. Consider /save-and-restart if also low on quota
+
+Next alert: 90% (162k tokens) - Emergency compact
+```
+
+### Technical Implementation
+
+**Context Tracking Module** (`src/context-tracker.ts`):
+
+```typescript
+interface ContextUsage {
+  totalTokens: number;
+  breakdown: {
+    systemPrompt: number;
+    fileReads: number;
+    toolResults: number;
+    conversation: number;
+    codeGenerated: number;
+  };
+  percentUsed: number;
+  status: 'fresh' | 'healthy' | 'moderate' | 'warning' | 'danger' | 'critical';
+  compactionOpportunities: CompactionItem[];
+}
+
+interface CompactionItem {
+  category: string;
+  currentTokens: number;
+  potentialSavings: number;
+  description: string;
+  safe: boolean;  // Safe to remove without losing context
+}
+
+class ContextTracker {
+  private readonly CONTEXT_LIMIT = 180000;  // 90% of 200k
+  private readonly THRESHOLDS = {
+    WARNING: 0.50,   // 90k tokens
+    DANGER: 0.80,    // 144k tokens
+    CRITICAL: 0.90   // 162k tokens
+  };
+
+  async estimateCurrentContext(): Promise<ContextUsage> {
+    // Parse conversation history
+    // Estimate token counts per section
+    // Identify compaction opportunities
+  }
+
+  async compactContext(level: 'soft' | 'strategic' | 'emergency'): Promise<number> {
+    // Remove based on compaction level
+    // Return tokens saved
+  }
+
+  shouldNotify(currentUsage: number): NotificationLevel | null {
+    // Check thresholds
+    // Return notification level if needed
+  }
+}
+```
+
+### Integration with Existing System
+
+**Enhanced Session Monitor** (update `src/session-monitor.ts`):
+
+```typescript
+// Add context tracking alongside token tracking
+const contextTracker = new ContextTracker();
+const quotaTracker = new QuotaTracker();
+
+setInterval(async () => {
+  const contextStatus = await contextTracker.estimateCurrentContext();
+  const quotaStatus = quotaTracker.getStatus();
+
+  // Combined alerting
+  if (contextStatus.percentUsed >= 0.80 && quotaStatus.percentUsed >= 0.80) {
+    sendCriticalAlert('BOTH context and quota approaching limits!');
+  } else if (contextStatus.percentUsed >= 0.80) {
+    sendContextAlert(contextStatus);
+  } else if (quotaStatus.percentUsed >= 0.80) {
+    sendQuotaAlert(quotaStatus);
+  }
+}, 60000);  // Check every minute
+```
+
+**Desktop Notifications**:
+
+```applescript
+# 50% Context Alert
+osascript -e 'display notification "Context at 50% (90k tokens). Monitor usage and prefer edits." with title "⚡ Context Checkpoint"'
+
+# 80% Context Alert
+osascript -e 'display notification "Context at 80% (144k tokens). Compact now to continue: /compact-context" with title "🔴 Context Danger"'
+
+# 90% Emergency
+osascript -e 'display notification "Context at 90%! Emergency compaction triggered." with title "🚨 Context Critical"'
+```
+
+### Workflow Example
+
+**Session with Context Management**:
+
+```
+2:00 PM - Start Session
+Context: 🎯 FRESH (5k / 180k, 3%)
+Quota:   🎯 FRESH (0k / 200k, 0%)
+Action:  Read files, begin implementation
+
+3:30 PM - Making progress
+Context: 🟢 HEALTHY (68k / 180k, 38%)
+Quota:   💡 MODERATE (95k / 200k, 48%)
+Action:  Continue coding normally
+
+4:30 PM - Context checkpoint
+Context: ⚡ MODERATE (92k / 180k, 51%)
+Quota:   💡 MODERATE (145k / 200k, 73%)
+Alert:   "⚡ Context at 50% - Monitor usage"
+Action:  Use edits instead of re-reads
+
+5:15 PM - Context danger zone
+Context: ⚠️ WARNING (125k / 180k, 69%)
+Quota:   ⚠️ DANGER (162k / 200k, 81%)
+Alert:   "⚠️ Context approaching limit"
+Action:  Run /compact-context
+
+5:16 PM - After compaction
+Context: 🟢 HEALTHY (79k / 180k, 44%)
+Quota:   ⚠️ DANGER (162k / 200k, 81%)
+Action:  Continue current task, plan next session
+
+5:30 PM - Plan next session
+Context: 🟢 HEALTHY (87k / 180k, 48%)
+Quota:   🔴 CRITICAL (178k / 200k, 89%)
+Action:  Run /plan-next-session
+
+5:35 PM - Wrap up
+Context: ⚡ MODERATE (93k / 180k, 52%)
+Quota:   🚨 EMERGENCY (195k / 200k, 98%)
+Action:  Commit code, stop session
+
+--- Next session auto-starts at 7:10 PM ---
+
+7:10 PM - Fresh start
+Context: 🎯 FRESH (8k / 180k, 4%)
+Quota:   🎯 FRESH (0k / 200k, 0%)
+Action:  Load handoff, continue work efficiently
+```
+
+---
+
+## Summary: Context + Quota Dual Tracking
+
+### Why Both Matter
+
+**Token Quota**: Controls rate limits (5-hour rolling window)
+**Context Window**: Controls conversation length (per-session cumulative)
+
+**You need both because**:
+- High quota + low context = Can't continue (need restart)
+- Low quota + high context = Can't continue (need wait + restart)
+- Both healthy = Productive coding!
+
+### Alert Thresholds
+
+| Metric | 50% | 80% | 90% | Action |
+|--------|-----|-----|-----|--------|
+| **Quota** | Monitor | Plan next session | Wrap up | Auto-schedule |
+| **Context** | Checkpoint | Compact now | Emergency | Auto-compact |
+| **Both** | Continue | Strategic planning | Critical decisions | Save & exit |
+
+### New Commands Summary
+
+```bash
+/context-status         # Detailed context analysis
+/compact-context       # Free up context space
+/save-and-restart      # Fresh context, same quota
+/session-status        # Shows BOTH quota + context
+/plan-next-session     # Context-aware planning
+```
+
+### Benefits for Users
+
+**Beginners**: Learn context management patterns
+**Intermediate**: Never hit context limits unexpectedly
+**Advanced**: Maximize both quota and context efficiency
+
+**Result**: Ultra-efficient sessions with zero waste! 🚀

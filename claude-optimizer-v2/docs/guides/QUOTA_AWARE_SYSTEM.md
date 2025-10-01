@@ -11,10 +11,12 @@ Claude Code enforces rate limits based on a **rolling 5-hour window**:
 
 The quota-aware system:
 1. **Tracks** token usage in real-time
-2. **Warns** you at critical thresholds (50%, 75%, 90%, 95%)
-3. **Schedules** sessions when quota is insufficient
-4. **Creates** calendar events for scheduled sessions
-5. **Prevents** rate limit surprises
+2. **Monitors** context window consumption per-session
+3. **Warns** you at critical thresholds (50%, 80%, 90%)
+4. **Compacts** context automatically to extend sessions
+5. **Schedules** sessions when quota is insufficient
+6. **Creates** calendar events for scheduled sessions
+7. **Prevents** rate limit and context limit surprises
 
 ## Key Components
 
@@ -91,11 +93,37 @@ Intelligent scheduling based on quota availability.
 3. If nothing fits, schedule for quota reset time
 4. Offer calendar integration for scheduled sessions
 
-### 4. Slash Commands
+### 4. Context Window Tracker (`src/context-tracker.ts`)
+
+Monitors conversation context size to prevent hitting limits.
+
+**Key Features:**
+- Estimates current context token usage
+- Tracks context growth per session
+- Identifies compaction opportunities
+- Auto-compacts at critical thresholds
+- Provides restart options when needed
+
+**Context Levels:**
+```
+🎯 FRESH (0-50k):              Plenty of space. Read files freely
+🟢 HEALTHY (50-90k):           Good space. Normal operation
+⚡ MODERATE (90-120k):         Monitor usage. Prefer edits over re-reads
+⚠️ CONTEXT WARNING (120-144k, 50%): Plan compaction strategy
+🔴 CONTEXT DANGER (144-180k, 80%):  COMPACT NOW to continue
+🚨 CONTEXT CRITICAL (180k+):        Emergency auto-compact triggered
+```
+
+**Context vs Quota:**
+- **Quota**: Rolling 5-hour window (resets automatically)
+- **Context**: Per-session cumulative (grows with conversation)
+- **Both matter**: Can have quota but no context, or vice versa!
+
+### 5. Slash Commands
 
 #### `/session-status`
 
-Displays comprehensive session and quota status:
+Displays comprehensive session, quota, AND context status:
 
 ```
 📊 Claude Code Session Status
@@ -129,7 +157,91 @@ Resets in:    2h 45m
    Medium tasks OK (30-60k tokens, 20-40 tool calls). Monitor burn rate.
 
 📢 Next Alert:   50% usage (~15,000 tokens)
+
+📝 CONTEXT WINDOW (Session)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Model:        Claude Sonnet 4.5
+Limit:        180,000 tokens (usable)
+Used:         68,000 tokens (38%)
+Remaining:    112,000 tokens (62%)
+Context:      [███████              ] 38%
+Status:       🟢 HEALTHY - Normal operation
+Est. Hours:   ~2-3 hours remaining
+
+📋 Status & Recommendation:
+   🟢 HEALTHY: 112,000 tokens context remaining.
+   Continue coding normally. Use Edit over Read+Write when possible.
+
+📢 Next Alert:   50% context (~90,000 tokens)
+
+⚡ COMBINED HEALTH: GOOD
+   Both quota and context are healthy. Continue current work.
 ```
+
+#### `/context-status`
+
+Displays detailed context window analysis:
+
+```
+📝 Context Window Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 USAGE SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total Context:    68,000 / 180,000 tokens
+Percentage:       38% used
+Status:           🟢 HEALTHY - Normal operation
+Remaining:        112,000 tokens (~2-3 hours)
+
+📁 CONTEXT BREAKDOWN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+System Prompt:    5,000 tokens   (7%)
+File Reads:       18,000 tokens  (26%) - 12 files
+Tool Results:     15,000 tokens  (22%) - 34 results
+Conversation:     20,000 tokens  (29%) - 45 exchanges
+Code Generated:   10,000 tokens  (15%) - 8 responses
+
+🧹 COMPACTION OPPORTUNITIES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Old file reads:   -3,000 tokens (keep recent 10)
+Duplicate tools:  -2,000 tokens (deduplicate)
+Old exchanges:    -1,500 tokens (keep key decisions)
+
+Total Potential:  6,500 tokens (not needed yet)
+
+💡 RECOMMENDATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Context is healthy - no action needed
+✅ Continue normal operation
+📊 Next checkpoint: 50% (90k tokens)
+
+Compaction available if needed: /compact-context
+```
+
+#### `/compact-context`
+
+Compact conversation context to free up space:
+
+```bash
+/compact-context
+```
+
+See detailed flow in [AUTOMATED_SESSION_ORCHESTRATION_PLAN.md](../planning/AUTOMATED_SESSION_ORCHESTRATION_PLAN.md#compact-context).
+
+#### `/save-and-restart`
+
+Save context and start fresh session (preserves quota):
+
+```bash
+/save-and-restart
+```
+
+**When to use:**
+- Context approaching limit (80%+)
+- Want fresh conversation space
+- Same token quota window still valid
+
+Creates handoff file and restarts session with clean context.
 
 #### `/start-next-session`
 
@@ -324,11 +436,18 @@ When quota is 75%+ used, prefer smaller tasks:
 - Code review (8-12k tokens)
 
 ### 4. Monitor During Long Sessions
-Session monitor sends warnings:
+System monitors both quota AND context:
+
+**Quota warnings**:
 - **50% quota**: Keep an eye on usage
-- **75% quota**: Consider wrapping up
+- **80% quota**: Plan next session
 - **90% quota**: Save work, prepare to stop
 - **95% quota**: Rate limit imminent
+
+**Context warnings**:
+- **50% context**: Use edits, minimize re-reads
+- **80% context**: Compact now to continue
+- **90% context**: Emergency auto-compact
 
 ### 5. Plan Around Reset Times
 The 5-hour window starts from **first token used**, not session start.
