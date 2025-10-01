@@ -473,16 +473,38 @@ Every session follows this standardized format:
 5. Prerequisites checklist
 6. Session start prompt
 
-**Active Sessions**:
+**Completed Sessions**:
 - ✅ [SESSION_1](claude-optimizer-v2/docs/sessions/SESSION_1_START_NATIVE_WORKFLOWS.md) - Native workflows
 - ✅ [SESSION_2](claude-optimizer-v2/SESSION_2_HANDOFF.md) - Quota tracking
 - ✅ [SESSION_2.5](claude-optimizer-v2/SESSION_2.5_COMPLETE.md) - Architecture refinement
 - ✅ [SESSION_3](claude-optimizer-v2/SESSION_3_PLAN.md) - Dashboard implementation
-- 📋 [SESSION_4A](claude-optimizer-v2/docs/planning/AUTOMATED_SESSION_ORCHESTRATION_PLAN.md) - Automation core
-- 📋 [SESSION_4B](claude-optimizer-v2/SESSION_4B_PLAN.md) - Automation refinement
-- 📋 SESSION_5 - Token estimation ML (planned)
+- ✅ [SESSION_4A](claude-optimizer-v2/SESSION_4A_COMPLETE.md) - Automation core
+- ✅ [SESSION_4B](claude-optimizer-v2/SESSION_4B_COMPLETE.md) - Automation refinement
 
-**Pattern**: Sessions evolve organically as understanding deepens. The agent creates new session plans as the project progresses and scope becomes clearer.
+**Planned Implementation Sessions**:
+- 🔴 [SESSION_5](claude-optimizer-v2/SESSION_5_PLAN.md) - Context Window Monitoring (CRITICAL)
+  - **Priority**: Must complete first (foundational)
+  - **Est**: 3-4h, 45-65k tokens
+  - **Parallel**: No (required by SESSION 6A/6B)
+- 🟡 [SESSION_6A](claude-optimizer-v2/SESSION_6A_PLAN.md) - Token Estimation ML System (HIGH)
+  - **Priority**: High value for planning
+  - **Est**: 3-4h, 55-75k tokens
+  - **Parallel**: ✅ YES with SESSION 6B
+- 🟡 [SESSION_6B](claude-optimizer-v2/SESSION_6B_PLAN.md) - Automation Scripts (HIGH)
+  - **Priority**: Enables hands-free operation
+  - **Est**: 2-3h, 35-50k tokens
+  - **Parallel**: ✅ YES with SESSION 6A
+- 🟢 [SESSION_7](claude-optimizer-v2/SESSION_7_PLAN.md) - Session Memory System (MEDIUM)
+  - **Priority**: Integrates all previous systems
+  - **Est**: 2.5-3h, 40-55k tokens
+  - **Parallel**: No (requires SESSION 5, 6A, 6B)
+
+**Build Path** (see [BUILD_ORCHESTRATION_PROMPT.md](BUILD_ORCHESTRATION_PROMPT.md)):
+- **Week 1**: SESSION 5 (solo) → Foundation complete
+- **Week 2**: SESSION 6A + 6B (parallel) → Advanced features
+- **Week 3**: SESSION 7 (solo) → Full integration
+
+**Pattern**: Sessions evolve organically as understanding deepens. New session plans are created as project scope becomes clearer. Use [IMPLEMENTATION_GAP_ANALYSIS.md](IMPLEMENTATION_GAP_ANALYSIS.md) to track what's built vs documented.
 
 ### Standard Operating Procedure
 
