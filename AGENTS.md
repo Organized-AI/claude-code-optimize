@@ -460,6 +460,11 @@ Every session follows this standardized format:
 
 **Location**: `claude-optimizer-v2/SESSION_N_PLAN.md`
 
+**Naming Convention**:
+- Primary sessions: `SESSION_1`, `SESSION_2`, `SESSION_3`, etc.
+- Refinements: `SESSION_2.5` (between 2 and 3)
+- Variants/Splits: `SESSION_4A`, `SESSION_4B` (when scope evolves)
+
 **Required Sections**:
 1. Header (status, time, tokens, prerequisites)
 2. Executive summary
@@ -472,8 +477,12 @@ Every session follows this standardized format:
 - ✅ [SESSION_1](claude-optimizer-v2/docs/sessions/SESSION_1_START_NATIVE_WORKFLOWS.md) - Native workflows
 - ✅ [SESSION_2](claude-optimizer-v2/SESSION_2_HANDOFF.md) - Quota tracking
 - ✅ [SESSION_2.5](claude-optimizer-v2/SESSION_2.5_COMPLETE.md) - Architecture refinement
-- 📋 [SESSION_3](claude-optimizer-v2/SESSION_3_PLAN.md) - Dashboard implementation
-- 📋 [SESSION_4](claude-optimizer-v2/docs/planning/AUTOMATED_SESSION_ORCHESTRATION_PLAN.md) - Automation
+- ✅ [SESSION_3](claude-optimizer-v2/SESSION_3_PLAN.md) - Dashboard implementation
+- 📋 [SESSION_4A](claude-optimizer-v2/docs/planning/AUTOMATED_SESSION_ORCHESTRATION_PLAN.md) - Automation core
+- 📋 [SESSION_4B](claude-optimizer-v2/SESSION_4B_PLAN.md) - Automation refinement
+- 📋 SESSION_5 - Token estimation ML (planned)
+
+**Pattern**: Sessions evolve organically as understanding deepens. The agent creates new session plans as the project progresses and scope becomes clearer.
 
 ### Standard Operating Procedure
 
@@ -540,6 +549,48 @@ Before starting any session, verify:
 - [ ] Handoff template ready
 
 **If any unchecked**: Stop and complete it first.
+
+### Session Plan Evolution
+
+**When to create session variants** (4A, 4B, etc.):
+
+```
+Trigger: Original session scope too large or complex
+
+Example:
+SESSION_4_PLAN.md: "Complete automation orchestration" (150k tokens estimated)
+    ↓ (During planning, realize this is too much)
+Split into:
+SESSION_4A_PLAN.md: "Automation core features" (80k tokens)
+SESSION_4B_PLAN.md: "Automation refinement" (70k tokens)
+```
+
+**When to create refinement sessions** (2.5, 3.5, etc.):
+
+```
+Trigger: Technical debt or architecture issues discovered mid-project
+
+Example:
+SESSION_2 complete, but architecture needs cleanup before SESSION_3
+    ↓
+SESSION_2.5: "Architecture refinement" (40k tokens)
+```
+
+**Agent responsibilities**:
+- ✅ CREATE session plans as understanding deepens
+- ✅ SPLIT sessions when estimates exceed 100k tokens
+- ✅ REFINE architecture when technical debt accumulates
+- ✅ UPDATE AGENTS.md session list when new plans created
+- ✅ LINK plans clearly (SESSION_4A → SESSION_4B dependency)
+
+**Documentation pattern**:
+```bash
+# When agent creates new session plan
+1. Create SESSION_N_PLAN.md in claude-optimizer-v2/
+2. Add entry to AGENTS.md Active Sessions list
+3. Update prerequisites in dependent sessions
+4. Commit: "docs: Add SESSION_N_PLAN.md - [Title]"
+```
 
 ## Documentation Links
 
