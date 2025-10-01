@@ -449,6 +449,98 @@ npm run build:watch        # Watch mode
 | `session-monitor.ts` | JSONL watching | `getCurrentSession()`, `estimateTokens()` |
 | `smart-session-planner.ts` | Intelligent scheduling | `findNextSession()`, `scheduleSession()` |
 
+## Session Planning Framework
+
+### Purpose
+Create **uniform, measured sessions** that minimize confusion and eliminate decision-making overhead.
+
+### Session Plan Template
+
+Every session follows this standardized format:
+
+**Location**: `claude-optimizer-v2/SESSION_N_PLAN.md`
+
+**Required Sections**:
+1. Header (status, time, tokens, prerequisites)
+2. Executive summary
+3. Session objectives with success criteria
+4. Phase breakdown with token estimates
+5. Prerequisites checklist
+6. Session start prompt
+
+**Active Sessions**:
+- ✅ [SESSION_1](claude-optimizer-v2/docs/sessions/SESSION_1_START_NATIVE_WORKFLOWS.md) - Native workflows
+- ✅ [SESSION_2](claude-optimizer-v2/SESSION_2_HANDOFF.md) - Quota tracking
+- ✅ [SESSION_2.5](claude-optimizer-v2/SESSION_2.5_COMPLETE.md) - Architecture refinement
+- 📋 [SESSION_3](claude-optimizer-v2/SESSION_3_PLAN.md) - Dashboard implementation
+- 📋 [SESSION_4](claude-optimizer-v2/docs/planning/AUTOMATED_SESSION_ORCHESTRATION_PLAN.md) - Automation
+
+### Standard Operating Procedure
+
+**Before Session**:
+```bash
+# 1. Check quota
+/session-status
+
+# 2. Review plan
+cat SESSION_N_PLAN.md
+
+# 3. Verify prerequisites
+npm run build && npm test
+
+# 4. Use prepared start prompt from plan
+```
+
+**During Session** (follow phases sequentially):
+- Phase 1 → Phase 2 → Phase 3 → Phase 4
+- Track token usage vs estimates
+- At 80% quota: Run `/plan-next-session`
+
+**After Session**:
+```bash
+# 1. Update plan status: 📋 → ✅
+# 2. Create handoff (SESSION_N_HANDOFF.md)
+# 3. Record actual vs estimated tokens
+# 4. Commit: git commit -m "feat: Complete Session N"
+```
+
+### Token Estimation Baselines
+
+| Task Type | Tokens/Hour | Confidence |
+|-----------|-------------|------------|
+| Planning | 20,000 | HIGH |
+| Implementation | 45,000 | MEDIUM |
+| Refactoring | 55,000 | MEDIUM |
+| Testing | 30,000 | HIGH |
+| Debugging | 35,000 | LOW |
+| Polish | 20,000 | HIGH |
+
+**Complexity Multipliers**:
+- Familiar tech: 0.9x
+- Learning tech: 1.2x
+- New tech: 1.5x
+
+### Phase Guidelines
+
+**Optimal phase**: 1-2 hours, 25-45k tokens
+
+**Break phases when**:
+- Natural checkpoint (tests pass, feature done)
+- Approaching 2-hour duration
+- Complexity shift (coding → testing)
+
+### Decision Checklist
+
+Before starting any session, verify:
+- [ ] Session plan exists
+- [ ] Token estimate calculated
+- [ ] Prerequisites verified
+- [ ] Start prompt prepared
+- [ ] Success criteria defined
+- [ ] Handoff template ready
+
+**If any unchecked**: Stop and complete it first.
+
 ## Documentation Links
 
 - **Getting Started**: [docs/guides/GETTING_STARTED_GUIDE.md](claude-optimizer-v2/docs/guides/GETTING_STARTED_GUIDE.md)
@@ -456,6 +548,7 @@ npm run build:watch        # Watch mode
 - **Hyperaware Mode**: [docs/guides/HYPERAWARE_MODE.md](claude-optimizer-v2/docs/guides/HYPERAWARE_MODE.md)
 - **Automation Plan**: [docs/planning/AUTOMATED_SESSION_ORCHESTRATION_PLAN.md](claude-optimizer-v2/docs/planning/AUTOMATED_SESSION_ORCHESTRATION_PLAN.md)
 - **Architecture**: [docs/architecture/VISUAL_ARCHITECTURE.md](claude-optimizer-v2/docs/architecture/VISUAL_ARCHITECTURE.md)
+- **Session Plans**: [claude-optimizer-v2/](claude-optimizer-v2/) (SESSION_N_PLAN.md files)
 
 ## Project Goals
 
