@@ -16,7 +16,7 @@ import type {
 
 export class CalendarService {
   private calendar: any;
-  private auth: OAuth2Client;
+  private auth!: OAuth2Client; // Initialized in initialize()
   private oauthHelper: OAuthHelper;
 
   constructor() {

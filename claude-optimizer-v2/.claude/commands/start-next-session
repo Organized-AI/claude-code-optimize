@@ -1,0 +1,206 @@
+#!/usr/bin/env node
+
+/**
+ * Smart Session Starter
+ * Finds the best next session considering:
+ * - Available time
+ * - Token quota
+ * - Task priority
+ * - Dependencies
+ *
+ * If quota is insufficient, automatically schedules for later
+ */
+
+const { SmartSessionPlanner } = require('../../dist/smart-session-planner.js');
+const { QuotaTracker } = require('../../dist/quota-tracker.js');
+const fs = require('fs');
+const path = require('path');
+const readline = require('readline');
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+function question(prompt) {
+  return new Promise((resolve) => {
+    rl.question(prompt, resolve);
+  });
+}
+
+async function main() {
+  console.log('🎯 Smart Session Starter\n');
+
+  // Load session queue
+  const queuePath = '.claude/session-queue.json';
+  if (!fs.existsSync(queuePath)) {
+    console.log('❌ No session queue found.');
+    console.log('   Run: claude-optimizer analyze');
+    process.exit(1);
+  }
+
+  const queue = JSON.parse(fs.readFileSync(queuePath, 'utf-8'));
+  const planner = new SmartSessionPlanner();
+  const quotaTracker = new QuotaTracker();
+
+  // Show quota status
+  const quotaStatus = quotaTracker.getStatus();
+  console.log('📊 Current Status:');
+  console.log(`   Token Quota: ${quotaStatus.remaining.toLocaleString()} / ${quotaStatus.limit.toLocaleString()} (${100 - quotaStatus.percent}% available)`);
+  console.log(`   Resets in: ${quotaStatus.timeUntilReset}`);
+  console.log('');
+
+  // Show queue summary
+  const readySessions = queue.sessions.filter(s => s.status === 'ready');
+  const scheduledSessions = queue.sessions.filter(s => s.status === 'scheduled');
+  const completeSessions = queue.sessions.filter(s => s.status === 'complete');
+
+  console.log(`📋 Session Queue: ${completeSessions.length}/${queue.sessions.length} complete`);
+  console.log(`   Ready: ${readySessions.length}`);
+  console.log(`   Scheduled: ${scheduledSessions.length}`);
+  console.log('');
+
+  // Check for scheduled sessions that are due
+  const dueSession = await planner.checkScheduledSessions(queue);
+  if (dueSession) {
+    const proceed = await question(`Start scheduled session: ${dueSession.phase}? (y/n): `);
+    if (proceed.toLowerCase() === 'y') {
+      startSession(dueSession);
+      rl.close();
+      return;
+    }
+  }
+
+  // Ask for available time
+  const hoursInput = await question('How many hours can you work? [1-5]: ');
+  const availableHours = Math.min(5, Math.max(1, parseInt(hoursInput) || 3));
+  console.log('');
+
+  // Find next best session
+  const result = await planner.findNextSession(queue, {
+    availableHours,
+    respectQuota: true
+  });
+
+  if (result.action === 'none') {
+    console.log('❌ ' + result.reason);
+    console.log('');
+
+    // Show what's blocking
+    const blocked = queue.sessions.filter(s => s.status === 'blocked');
+    if (blocked.length > 0) {
+      console.log('⏳ Waiting for:');
+      blocked.forEach(s => {
+        console.log(`   • ${s.phase} (depends on: ${s.dependencies.join(', ')})`);
+      });
+    }
+
+    rl.close();
+    return;
+  }
+
+  if (result.action === 'schedule') {
+    console.log('⏰ ' + result.reason);
+    console.log('');
+
+    const scheduleIt = await question('Schedule this session for later? (y/n): ');
+
+    if (scheduleIt.toLowerCase() === 'y') {
+      planner.scheduleSession(result.session!, result.scheduleFor!, 'quota');
+
+      // Save updated queue
+      fs.writeFileSync(queuePath, JSON.stringify(queue, null, 2));
+
+      console.log('');
+      console.log('✅ Session scheduled!');
+      console.log('   Run this command again after quota resets to start automatically');
+      console.log('');
+      console.log('💡 Or create calendar event:');
+      console.log(`   claude-optimizer create-calendar-events`);
+    } else {
+      // Try to find a smaller session
+      console.log('');
+      console.log('Looking for smaller sessions that fit...');
+
+      const smallerSessions = readySessions
+        .filter(s => s.estimatedTokens <= quotaStatus.remaining)
+        .sort((a, b) => b.estimatedTokens - a.estimatedTokens);
+
+      if (smallerSessions.length > 0) {
+        console.log('');
+        console.log('Found smaller sessions:');
+        smallerSessions.forEach((s, i) => {
+          console.log(`   ${i + 1}. ${s.phase} (${s.estimatedHours}h, ${s.estimatedTokens.toLocaleString()} tokens)`);
+        });
+
+        const choice = await question('\nStart which session? (1-' + smallerSessions.length + ', or 0 to cancel): ');
+        const index = parseInt(choice) - 1;
+
+        if (index >= 0 && index < smallerSessions.length) {
+          startSession(smallerSessions[index]);
+          rl.close();
+          return;
+        }
+      } else {
+        console.log('❌ No smaller sessions available that fit quota');
+      }
+    }
+
+    rl.close();
+    return;
+  }
+
+  // Can start!
+  console.log('✅ ' + result.reason);
+  console.log('');
+  console.log(`📋 Session: ${result.session!.phase}`);
+  console.log(`⏱️  Duration: ${result.session!.estimatedHours}h`);
+  console.log(`🎯 Objectives:`);
+  result.session!.objectives.forEach(obj => {
+    console.log(`   • ${obj}`);
+  });
+  console.log('');
+
+  const proceed = await question('Start this session? (y/n): ');
+
+  if (proceed.toLowerCase() === 'y') {
+    // Mark as in progress
+    result.session!.status = 'in_progress';
+    fs.writeFileSync(queuePath, JSON.stringify(queue, null, 2));
+
+    startSession(result.session!);
+  } else {
+    console.log('Cancelled');
+  }
+
+  rl.close();
+}
+
+function startSession(session) {
+  console.log('');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('🚀 Starting Claude Code Session');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(`Phase: ${session.phase}`);
+  console.log(`Agent: ${session.agent}`);
+  console.log(`Duration: ${session.estimatedHours}h`);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('');
+
+  // Start Claude with agent
+  const { spawn } = require('child_process');
+  const claude = spawn('claude', ['--agent', session.agent], {
+    stdio: 'inherit',
+    cwd: process.cwd()
+  });
+
+  claude.on('close', (code) => {
+    if (code === 0) {
+      console.log('');
+      console.log('✅ Session completed!');
+      console.log('   Run: /start-next-session to continue');
+    }
+  });
+}
+
+main().catch(console.error);

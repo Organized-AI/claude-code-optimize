@@ -1,0 +1,190 @@
+#!/usr/bin/env node
+
+/**
+ * Session Status Command
+ * Shows comprehensive status of:
+ * - Current session (if active)
+ * - Token quota usage with visual progress
+ * - Time remaining in session and quota windows
+ * - Warnings and recommendations
+ */
+
+const { SessionMonitor } = require('../../dist/session-monitor.js');
+const { QuotaTracker } = require('../../dist/quota-tracker.js');
+const fs = require('fs');
+const path = require('path');
+
+function createProgressBar(percent, width = 30) {
+  const filled = Math.round((width * percent) / 100);
+  const empty = width - filled;
+
+  let color = '\x1b[32m'; // Green
+  if (percent > 75) color = '\x1b[33m'; // Yellow
+  if (percent > 90) color = '\x1b[31m'; // Red
+
+  return `${color}[${'█'.repeat(filled)}${' '.repeat(empty)}]\x1b[0m ${percent}%`;
+}
+
+function formatTime(ms) {
+  const hours = Math.floor(ms / (1000 * 60 * 60));
+  const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  if (minutes > 0) return `${minutes}m ${seconds}s`;
+  return `${seconds}s`;
+}
+
+async function main() {
+  console.log('');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('📊 Claude Code Session Status');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('');
+
+  const monitor = new SessionMonitor();
+  const quotaTracker = new QuotaTracker();
+
+  // Check for active session
+  const currentSession = monitor.getCurrentSession();
+  const quotaStatus = quotaTracker.getStatus();
+  const now = new Date();
+
+  // === SESSION WINDOW ===
+  console.log('📅 SESSION WINDOW (5-hour limit)');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+  if (currentSession) {
+    const sessionElapsed = now.getTime() - currentSession.startTime.getTime();
+    const sessionRemaining = currentSession.endTime.getTime() - now.getTime();
+    const sessionPercent = Math.round((sessionElapsed / (5 * 60 * 60 * 1000)) * 100);
+
+    console.log(`Status:       ${currentSession.status === 'active' ? '🟢 Active' : '⚪ ' + currentSession.status}`);
+    console.log(`Session ID:   ${currentSession.id.substring(0, 12)}...`);
+    console.log(`Started:      ${currentSession.startTime.toLocaleString()}`);
+    console.log(`Expires:      ${currentSession.endTime.toLocaleString()}`);
+    console.log(`Elapsed:      ${formatTime(sessionElapsed)} / 5h`);
+    console.log(`Remaining:    ${formatTime(Math.max(0, sessionRemaining))}`);
+    console.log(`Progress:     ${createProgressBar(sessionPercent)}`);
+
+    if (currentSession.agent) {
+      console.log(`Agent:        ${path.basename(currentSession.agent)}`);
+    }
+
+    console.log(`Working Dir:  ${path.basename(currentSession.cwd)}`);
+
+    // Session warnings
+    if (sessionRemaining < 30 * 60 * 1000) {
+      console.log('');
+      console.log('⚠️  WARNING: Less than 30 minutes remaining in session window!');
+    } else if (sessionRemaining < 60 * 60 * 1000) {
+      console.log('');
+      console.log('💡 TIP: Less than 1 hour remaining in session window');
+    }
+  } else {
+    console.log('Status:       ⚪ No active session');
+    console.log('');
+    console.log('💡 Start a new session with: /start-next-session');
+  }
+
+  console.log('');
+  console.log('');
+
+  // === TOKEN QUOTA ===
+  console.log('🎯 TOKEN QUOTA (Rolling 5-hour window)');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+  console.log(`Plan:         ${quotaStatus.plan.toUpperCase()} (${quotaStatus.limit.toLocaleString()} tokens per 5h)`);
+  console.log(`Used:         ${quotaStatus.used.toLocaleString()} tokens (${quotaStatus.percent}%)`);
+  console.log(`Remaining:    ${quotaStatus.remaining.toLocaleString()} tokens (${100 - quotaStatus.percent}%)`);
+  console.log(`Usage:        ${createProgressBar(quotaStatus.percent)}`);
+
+  // Calculate burn rate if quota is being used
+  if (quotaStatus.used > 0 && currentSession) {
+    const quotaTracker = new QuotaTracker();
+    const quota = quotaTracker.loadQuota();
+    const windowStart = new Date(quota.currentWindow.startTime);
+    const minutesElapsed = (now.getTime() - windowStart.getTime()) / (1000 * 60);
+
+    if (minutesElapsed >= 1) {
+      const tokensPerMin = Math.round(quotaStatus.used / minutesElapsed);
+      const estimatedMinutesLeft = tokensPerMin > 0 ? Math.floor(quotaStatus.remaining / tokensPerMin) : 0;
+      const estimatedToolCalls = Math.floor(quotaStatus.remaining / 1500); // Conservative estimate
+
+      console.log(`Burn Rate:    ${tokensPerMin.toLocaleString()} tokens/min`);
+      console.log(`Est. Runway:  ~${estimatedMinutesLeft} minutes (${estimatedToolCalls} tool calls)`);
+    }
+  }
+
+  console.log(`Resets at:    ${quotaStatus.resetTime.toLocaleString()}`);
+  console.log(`Resets in:    ${quotaStatus.timeUntilReset}`);
+  console.log('');
+
+  // Quota recommendation with more detail
+  console.log('📋 Status & Recommendation:');
+  console.log(`   ${quotaStatus.recommendation}`);
+  console.log('');
+
+  // Next warning threshold
+  const nextThreshold = quotaStatus.percent < 10 ? 10 :
+                       quotaStatus.percent < 25 ? 25 :
+                       quotaStatus.percent < 50 ? 50 :
+                       quotaStatus.percent < 75 ? 75 :
+                       quotaStatus.percent < 90 ? 90 : 95;
+
+  if (quotaStatus.percent < 95) {
+    const tokensUntilWarning = Math.round((nextThreshold / 100 * quotaStatus.limit) - quotaStatus.used);
+    console.log(`📢 Next Alert:   ${nextThreshold}% usage (~${tokensUntilWarning.toLocaleString()} tokens)`);
+    console.log('');
+  }
+
+  // === SCHEDULED SESSIONS ===
+  const home = process.env.HOME || process.env.USERPROFILE || '';
+  const queuePath = path.join(home, '.claude', 'session-queue.json');
+
+  if (fs.existsSync(queuePath)) {
+    const queue = JSON.parse(fs.readFileSync(queuePath, 'utf-8'));
+    const scheduledSessions = queue.sessions.filter(s => s.status === 'scheduled');
+
+    if (scheduledSessions.length > 0) {
+      console.log('📅 SCHEDULED SESSIONS');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+      scheduledSessions.forEach((session, i) => {
+        const scheduledFor = new Date(session.scheduledFor);
+        const timeUntil = scheduledFor.getTime() - now.getTime();
+
+        console.log(`${i + 1}. ${session.phase}`);
+        console.log(`   Scheduled: ${scheduledFor.toLocaleString()}`);
+        console.log(`   In:        ${formatTime(timeUntil)}`);
+        console.log(`   Reason:    ${session.scheduleReason}`);
+        console.log(`   Tokens:    ${session.estimatedTokens.toLocaleString()}`);
+        console.log('');
+      });
+
+      console.log('💡 Run /start-next-session to check for ready sessions');
+      console.log('');
+    }
+  }
+
+  // === QUICK ACTIONS ===
+  console.log('⚡ QUICK ACTIONS');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+  if (!currentSession) {
+    console.log('  /start-next-session    Start the next planned session');
+  }
+
+  if (quotaStatus.remaining > 30000) {
+    console.log('  claude-optimizer analyze   Analyze a new project');
+  } else {
+    console.log('  ⏰ Low quota - wait for reset or schedule sessions');
+  }
+
+  console.log('  /create-calendar-events    Export scheduled sessions to calendar');
+  console.log('');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('');
+}
+
+main().catch(console.error);

@@ -8,6 +8,8 @@
 import { Command } from 'commander';
 import { ProjectAnalyzer } from './project-analyzer.js';
 import { OptimizerDatabase } from './database.js';
+import { CalendarService } from './calendar-service.js';
+import { CalendarWatcher } from './calendar-watcher.js';
 import ora from 'ora';
 import chalk from 'chalk';
 import * as path from 'path';
@@ -237,5 +239,191 @@ function getComplexityDisplay(complexity: number): string {
 
   return color(`${complexity}/10 (${label})`);
 }
+
+/**
+ * Calendar commands group
+ */
+const calendar = program
+  .command('calendar')
+  .description('Manage Google Calendar integration');
+
+/**
+ * Schedule command - Create calendar schedule from analysis
+ */
+calendar
+  .command('schedule <project-path>')
+  .description('Create calendar schedule for project')
+  .option('--start <date>', 'Start date (YYYY-MM-DD)', new Date().toISOString().split('T')[0])
+  .option('--hours <start-end>', 'Working hours (e.g., "9-17")', '9-17')
+  .option('--days <days>', 'Days of week (0=Sun, 1=Mon, ..., 6=Sat)', '1,2,3,4,5')
+  .option('--length <hours>', 'Session length in hours (max 5)', '4')
+  .action(async (projectPath, options) => {
+    const spinner = ora('Initializing calendar service...').start();
+
+    try {
+      const absolutePath = path.resolve(projectPath);
+
+      // Get project analysis
+      const db = new OptimizerDatabase();
+      let analysis = db.getProject(absolutePath);
+
+      if (!analysis) {
+        spinner.text = 'No analysis found, analyzing project...';
+        spinner.stop();
+        const analyzer = new ProjectAnalyzer();
+        analysis = await analyzer.analyzeProject(absolutePath);
+        db.saveProjectAnalysis(analysis);
+      }
+
+      db.close();
+
+      // Parse options
+      const [startHour, endHour] = options.hours.split('-').map(Number);
+      const daysOfWeek = options.days.split(',').map(Number);
+      const sessionLength = parseInt(options.length);
+
+      const preferences = {
+        startDate: new Date(options.start),
+        workingHours: { start: startHour, end: endHour },
+        daysOfWeek,
+        sessionLength,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      };
+
+      spinner.text = 'Authenticating with Google Calendar...';
+      const calendarService = new CalendarService();
+      await calendarService.initialize();
+
+      spinner.text = 'Creating calendar schedule...';
+      spinner.stop();
+
+      const events = await calendarService.createSessionSchedule(analysis, preferences);
+
+      spinner.succeed(`Created ${events.length} calendar events!`);
+
+      console.log(chalk.bold('\n📅 Calendar Schedule Created\n'));
+      events.forEach((event, i) => {
+        console.log(chalk.cyan(`${i + 1}. ${event.sessionConfig.phase}`));
+        console.log(`   ${event.start.toLocaleString()} - ${event.end.toLocaleString()}`);
+        console.log(`   Model: ${event.sessionConfig.model} | Budget: ${event.sessionConfig.tokenBudget.toLocaleString()} tokens\n`);
+      });
+
+    } catch (error) {
+      spinner.fail('Scheduling failed');
+      console.error(chalk.red('\nError:'), (error as Error).message);
+      process.exit(1);
+    }
+  });
+
+/**
+ * List upcoming sessions
+ */
+calendar
+  .command('list')
+  .description('List upcoming Claude sessions from calendar')
+  .action(async () => {
+    const spinner = ora('Loading calendar events...').start();
+
+    try {
+      const calendarService = new CalendarService();
+      await calendarService.initialize();
+
+      const sessions = await calendarService.listUpcomingSessions();
+
+      spinner.stop();
+
+      if (sessions.length === 0) {
+        console.log(chalk.yellow('\nℹ️  No upcoming Claude sessions found\n'));
+        return;
+      }
+
+      console.log(chalk.bold(`\n📅 Upcoming Claude Sessions (${sessions.length})\n`));
+
+      sessions.forEach((session, i) => {
+        const daysUntil = Math.floor((session.start.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        console.log(chalk.cyan(`${i + 1}. ${session.sessionConfig.phase}`));
+        console.log(`   Project: ${session.sessionConfig.projectName}`);
+        console.log(`   Time: ${session.start.toLocaleString()}`);
+        console.log(`   ${daysUntil === 0 ? 'Today' : `In ${daysUntil} day(s)`}\n`);
+      });
+
+    } catch (error) {
+      spinner.fail('Failed to load sessions');
+      console.error(chalk.red('\nError:'), (error as Error).message);
+      process.exit(1);
+    }
+  });
+
+/**
+ * Watch calendar for upcoming sessions
+ */
+calendar
+  .command('watch')
+  .description('Watch calendar and auto-start sessions')
+  .option('--no-auto-start', 'Disable auto-start (warnings only)')
+  .option('--interval <minutes>', 'Check interval in minutes', '5')
+  .action(async (options) => {
+    console.log(chalk.bold('\n👁️  Calendar Watcher\n'));
+
+    try {
+      const watcher = new CalendarWatcher({
+        pollIntervalMinutes: parseInt(options.interval),
+        autoStart: options.autoStart
+      });
+
+      // Set up event listeners
+      watcher.on('session-warning', () => {
+        // Already handled in watcher
+      });
+
+      watcher.on('session-starting', (session) => {
+        console.log(chalk.green(`\n🚀 Starting: ${session.sessionConfig.phase}\n`));
+      });
+
+      watcher.on('session-complete', (state) => {
+        console.log(chalk.green(`\n✅ Session completed: ${state.phase}\n`));
+      });
+
+      watcher.on('session-error', (error) => {
+        console.error(chalk.red(`\n❌ Session error: ${error.message}\n`));
+      });
+
+      await watcher.start();
+
+      console.log(chalk.green('  ✓ Watcher started successfully\n'));
+      console.log('  Press Ctrl+C to stop\n');
+
+      // Keep process alive
+      process.on('SIGINT', () => {
+        console.log('\n\n  Stopping watcher...\n');
+        watcher.stop();
+        process.exit(0);
+      });
+
+    } catch (error) {
+      console.error(chalk.red('\nError:'), (error as Error).message);
+      process.exit(1);
+    }
+  });
+
+/**
+ * Logout from Google Calendar
+ */
+calendar
+  .command('logout')
+  .description('Clear Google Calendar authentication')
+  .action(async () => {
+    const spinner = ora('Clearing authentication...').start();
+
+    try {
+      const calendarService = new CalendarService();
+      await calendarService.logout();
+      spinner.succeed('Logged out successfully');
+    } catch (error) {
+      spinner.fail('Logout failed');
+      console.error(chalk.red('\nError:'), (error as Error).message);
+      process.exit(1);
+    }
+  });
 
 program.parse();

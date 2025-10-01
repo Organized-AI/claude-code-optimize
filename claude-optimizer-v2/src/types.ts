@@ -173,3 +173,36 @@ export interface OAuthToken {
   token_type: string;
   expiry_date?: number;
 }
+
+// ============================================
+// Shell Automation Types (Session 2.5)
+// ============================================
+
+/**
+ * Session handle returned by SessionLauncher
+ */
+export interface SessionHandle {
+  pid: number;
+  sessionId: string;
+  eventId: string;
+  projectPath: string;
+  phase: string;
+  startTime: Date;
+  logFilePath: string;
+}
+
+/**
+ * Session metrics tracked by LogMonitor
+ */
+export interface SessionMetrics {
+  tokensUsed: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheTokens: number;
+  estimatedCost: number;
+  toolCalls: number;
+  objectivesCompleted: string[];
+  messageCount: number;
+  startTime: Date;
+  lastUpdate: Date;
+}

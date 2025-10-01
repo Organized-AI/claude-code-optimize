@@ -1,0 +1,81 @@
+#!/usr/bin/env node
+
+/**
+ * Create Calendar Events
+ * Exports scheduled sessions to iCal format
+ * Includes:
+ * - Session details and objectives
+ * - Token budget estimates
+ * - 30-minute and 5-minute reminders
+ * - Project path as location
+ */
+
+const { SmartSessionPlanner } = require('../../dist/smart-session-planner.js');
+const fs = require('fs');
+const path = require('path');
+
+async function main() {
+  console.log('');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('📅 Create Calendar Events');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('');
+
+  // Load session queue
+  const home = process.env.HOME || process.env.USERPROFILE || '';
+  const queuePath = path.join(home, '.claude', 'session-queue.json');
+
+  if (!fs.existsSync(queuePath)) {
+    console.log('❌ No session queue found');
+    console.log('   Run: claude-optimizer analyze <project-path>');
+    console.log('');
+    process.exit(1);
+  }
+
+  const queue = JSON.parse(fs.readFileSync(queuePath, 'utf-8'));
+  const planner = new SmartSessionPlanner();
+
+  // Create calendar events
+  await planner.createCalendarEvents(queue);
+
+  // Show where files were created
+  const scheduledSessions = queue.sessions.filter(s => s.status === 'scheduled');
+
+  if (scheduledSessions.length > 0) {
+    console.log('');
+    console.log('📂 Calendar files created in:');
+    console.log(`   ${path.join(home, '.claude', 'calendar')}/`);
+    console.log('');
+    console.log('📱 To import:');
+    console.log('   • macOS Calendar: Double-click the .ics files');
+    console.log('   • Google Calendar: Import from Settings');
+    console.log('   • Outlook: File → Open & Export → Import/Export');
+    console.log('');
+    console.log('⏰ Reminders set for:');
+    console.log('   • 30 minutes before session');
+    console.log('   • 5 minutes before session');
+    console.log('');
+
+    // Show next scheduled session
+    const sortedSessions = scheduledSessions.sort((a, b) =>
+      new Date(a.scheduledFor).getTime() - new Date(b.scheduledFor).getTime()
+    );
+
+    const nextSession = sortedSessions[0];
+    const now = new Date();
+    const timeUntil = new Date(nextSession.scheduledFor).getTime() - now.getTime();
+    const hours = Math.floor(timeUntil / (1000 * 60 * 60));
+    const minutes = Math.floor((timeUntil % (1000 * 60 * 60)) / (1000 * 60));
+
+    console.log('🎯 Next Scheduled Session:');
+    console.log(`   ${nextSession.phase}`);
+    console.log(`   ${new Date(nextSession.scheduledFor).toLocaleString()}`);
+    console.log(`   In ${hours}h ${minutes}m`);
+    console.log('');
+  }
+
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('');
+}
+
+main().catch(console.error);

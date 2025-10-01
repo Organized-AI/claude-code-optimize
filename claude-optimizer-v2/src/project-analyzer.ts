@@ -1,9 +1,10 @@
 /**
  * Project Analyzer
- * Uses Claude Agent SDK to analyze project complexity and generate session plans
+ * Analyzes project complexity using rule-based heuristics
+ * NOTE: AI-powered analysis temporarily disabled pending Session 3 refactor
  */
 
-import { query } from '@anthropic-ai/claude-agent-sdk';
+// import { query } from '@anthropic-ai/claude-agent-sdk'; // TODO: Replace with CLI in Session 3
 import { FileScanner } from './utils/file-scanner.js';
 import type {
   ProjectAnalysis,
@@ -33,9 +34,10 @@ export class ProjectAnalyzer {
     console.log(`  Files: ${metadata.fileCount}, Size: ${metadata.totalSizeKB}KB`);
     console.log(`  Tests: ${metadata.hasTests ? '✓' : '✗'}, Docs: ${metadata.hasDocs ? '✓' : '✗'}\n`);
 
-    // Step 2: Use Claude SDK to analyze complexity
-    console.log('  🤖 Analyzing complexity with Claude Opus...');
-    const aiAnalysis = await this.analyzeWithClaude(projectPath, metadata);
+    // Step 2: Analyze complexity with heuristics
+    // TODO: Re-enable AI analysis with CLI approach in Session 3
+    console.log('  📐 Analyzing complexity with heuristics...');
+    const aiAnalysis = this.analyzeWithHeuristics(metadata);
 
     console.log(`  ✓ Complexity: ${aiAnalysis.complexity}/10`);
     console.log(`  ✓ Estimated: ${aiAnalysis.estimatedHours} hours\n`);
@@ -64,7 +66,9 @@ export class ProjectAnalyzer {
 
   /**
    * Use Claude SDK to perform deep complexity analysis
+   * NOTE: Temporarily disabled - will be replaced with CLI approach in Session 3
    */
+  /*
   private async analyzeWithClaude(
     projectPath: string,
     metadata: ProjectMetadata
@@ -139,10 +143,13 @@ export class ProjectAnalyzer {
       return this.basicAnalysis(metadata);
     }
   }
+  */
 
   /**
    * Build comprehensive analysis prompt for Claude
+   * NOTE: Temporarily disabled - will be replaced with CLI approach in Session 3
    */
+  /*
   private buildAnalysisPrompt(projectPath: string, metadata: ProjectMetadata): string {
     return `
 You are analyzing a software project to estimate complexity and development time.
@@ -225,10 +232,13 @@ Provide your analysis as valid JSON in a code block:
 Analyze the project thoroughly and provide accurate estimates.
     `.trim();
   }
+  */
 
   /**
    * Parse Claude's JSON response
+   * NOTE: Temporarily disabled - will be replaced with CLI approach in Session 3
    */
+  /*
   private parseClaudeResponse(response: string): AIAnalysisResult {
     // Extract JSON from code block
     const jsonMatch = response.match(/```json\n([\s\S]*?)\n```/) ||
@@ -266,6 +276,7 @@ Analyze the project thoroughly and provide accurate estimates.
       throw new Error(`Failed to parse Claude response JSON: ${errorMsg}`);
     }
   }
+  */
 
   /**
    * Generate session phases based on AI analysis
@@ -383,7 +394,7 @@ Analyze the project thoroughly and provide accurate estimates.
   /**
    * Fallback basic analysis when Claude SDK fails
    */
-  private basicAnalysis(metadata: ProjectMetadata): AIAnalysisResult {
+  private analyzeWithHeuristics(metadata: ProjectMetadata): AIAnalysisResult {
     // Simple heuristic-based estimation
     let complexity = 1;
 
