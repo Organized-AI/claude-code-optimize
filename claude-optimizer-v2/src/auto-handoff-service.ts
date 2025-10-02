@@ -184,8 +184,8 @@ export class AutoHandoffService {
    * ]
    */
   private async extractNextObjectives(
-    memory: ProjectMemory,
-    projectPath: string
+    _memory: ProjectMemory,
+    _projectPath: string
   ): Promise<SessionObjective[]> {
     // TODO(human): Implement intelligent objective extraction
 
