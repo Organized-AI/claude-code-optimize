@@ -183,9 +183,11 @@ class SessionOrchestrator {
     console.log(chalk.cyan('🔍 Determining Next Session'));
     console.log(chalk.gray('─'.repeat(80)));
 
-    // Look for the suggested next session from handoff
-    const suggestedSession = this.latestHandoff!.toSession;
-    const planFile = `SESSION_${suggestedSession}_PLAN.md`;
+    // Extract session number: "Session 7" → "7", "7" → "7"
+    const toSession = this.latestHandoff!.toSession;
+    const sessionNumber = toSession.match(/(\d+[AB]?)/)?.[1] || toSession;
+
+    const planFile = `SESSION_${sessionNumber}_PLAN.md`;
     const planPath = path.join(this.planningDir, planFile);
 
     if (fs.existsSync(planPath)) {
@@ -199,7 +201,7 @@ class SessionOrchestrator {
       const prereqMatch = planContent.match(/\*\*Prerequisites\*\*:\s*(.+)/);
 
       this.nextPlan = {
-        sessionNumber: suggestedSession,
+        sessionNumber,
         title: titleMatch ? titleMatch[1] : 'Unknown',
         planFile,
         estimated: {
@@ -219,7 +221,7 @@ class SessionOrchestrator {
       }
       console.log('');
     } else {
-      console.log(chalk.yellow(`  ⚠ No plan found for Session ${suggestedSession}`));
+      console.log(chalk.yellow(`  ⚠ No plan found for Session ${sessionNumber}`));
       console.log(chalk.gray(`    Expected: ${planFile}`));
       console.log('');
 
@@ -227,7 +229,7 @@ class SessionOrchestrator {
       if (this.latestHandoff!.nextObjectives.length > 0) {
         const firstObjective = this.latestHandoff!.nextObjectives[0];
         this.nextPlan = {
-          sessionNumber: suggestedSession,
+          sessionNumber,
           title: firstObjective.title,
           planFile: '',
           estimated: {

@@ -275,40 +275,133 @@ Ready for next session!
 
 ---
 
-### `advanced-planning-session.js` - Session Plan Orchestration **COMING SOON**
+### `advanced-planning-session.js` - Session Plan Overview
 
-**What it does:** Reads session plans from `docs/planning/`, analyzes dependencies, schedules multi-session workflows.
+**What it does:** Scans all session plans in `docs/planning/`, shows status, dependencies, and execution timeline.
 
 **When to use:**
-- Complex multi-session projects
-- Planning implementation phases
-- Coordinating sequential sessions (Session 6A → 6B → 7)
-- Automated project orchestration
+- Getting overview of all planned sessions
+- Understanding project roadmap
+- Seeing what's ready vs blocked
+- Planning multi-session workflows
 
-**Example (planned):**
+**Example:**
 ```bash
 $ node dist/commands/advanced-planning-session.js
 
 🎯 Advanced Session Orchestration
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Found session plans:
-  • SESSION_6A_PLAN.md - Token Estimation ML (estimated: 20k tokens)
-  • SESSION_6B_PLAN.md - Automation Integration (estimated: 5k tokens)
-  • SESSION_7_PLAN.md - Testing & Documentation (estimated: 15k tokens)
+Found 7 session plans:
 
-Dependency Analysis:
-  SESSION_6A ───> SESSION_6B ───> SESSION_7
-  (complete)      (complete)      (pending)
+  ○ 5: Context Window Monitoring System
+     Status: NOT STARTED | Priority: MEDIUM
+     Tokens: 45-65k tokens | Time: 3-4 hours
+     Prerequisites: 1
 
-Scheduling SESSION_7:
-  ✓ Prerequisites met
-  ✓ Estimated duration: 1.5 hours
-  ✓ Scheduled for: Tomorrow 2:00 PM
-  ✓ Handoff prepared
+  ○ 6A: Token Estimation ML System
+     Status: NOT STARTED | Priority: MEDIUM
+     Tokens: 55-75k tokens | Time: 3-4 hours
+     Prerequisites: 5
 
-Next steps ready!
+✓ 3 session(s) ready to schedule:
+  • SESSION 3: Real-Time Dashboard Implementation
+  • SESSION 5: Context Window Monitoring System
+
+📅 Suggested Execution Timeline
+Phase 1: SESSION 3, SESSION 5
+Phase 2: SESSION 6A, SESSION 6B
+Phase 3: SESSION 7
 ```
+
+**Use case scenarios:**
+- **Project planning:** See entire roadmap at a glance
+- **Dependency tracking:** Understand what blocks what
+- **Timeline visualization:** Optimal execution order
+- **Status overview:** What's done, what's ready, what's blocked
+
+---
+
+### `orchestrate-next.js` - Intelligent Session Orchestrator ✨ **NEW**
+
+**What it does:** Reads latest HANDOFF file, determines next session, generates complete kickoff prompt automatically.
+
+**When to use:**
+- **End of every session** - Before you finish, orchestrate what's next
+- Starting a new session - Get comprehensive kickoff with full context
+- Seamless continuity - Never lose context between sessions
+- Automated workflows - Let the tool figure out what to do next
+
+**Example:**
+```bash
+$ node dist/commands/orchestrate-next.js
+
+🎯 Intelligent Session Orchestrator
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📄 Finding Latest Handoff
+  ✓ Found: SESSION_6_HANDOFF.md
+
+📊 Current State
+  From Session: Session 6 (Sessions 6A + 6B Implementation)
+  To Session:   Session 7
+  Context:      122k/200k tokens (61% used - ready for fresh start)
+  Quota:        0/200k tokens (0% used - full quota available)
+
+🔍 Determining Next Session
+  ✓ Found plan: SESSION_7_PLAN.md
+  Title:        Session Memory System
+  Estimated:    40-55k tokens (2.5-3 hours)
+  Prerequisites: 5
+
+🚀 Next Session Ready
+Session 7: Session Memory System
+
+💾 Kickoff Prompt Saved
+  File: SESSION_7_KICKOFF_PROMPT.md
+
+Next Steps:
+  1. Copy the prompt from: SESSION_7_KICKOFF_PROMPT.md
+  2. Start a new Claude Code session
+  3. Paste the prompt to begin
+
+  Or run with --launch flag to auto-start:
+  node dist/commands/orchestrate-next.js --launch
+```
+
+**Generated Kickoff Prompt includes:**
+- ✅ Context from previous session (what was completed)
+- ✅ Current project state (context/quota status)
+- ✅ This session's objectives (from SESSION_N_PLAN.md)
+- ✅ First steps (build, test, read plan, implement)
+- ✅ Token/time estimates and prerequisites
+
+**Use case scenarios:**
+- **End-of-session workflow:**
+  ```bash
+  node dist/commands/save-and-restart.js    # Create handoff
+  node dist/commands/orchestrate-next.js    # Prepare next session
+  # Done! Next session prompt is ready
+  ```
+
+- **Auto-launch mode:**
+  ```bash
+  node dist/commands/orchestrate-next.js --launch
+  # Automatically starts next session with full context
+  ```
+
+- **Morning startup:**
+  ```bash
+  # Last night you created a handoff
+  # This morning, orchestrate picks up exactly where you left off
+  node dist/commands/orchestrate-next.js
+  # Paste SESSION_7_KICKOFF_PROMPT.md → start working immediately
+  ```
+
+- **Multi-day projects:**
+  - Day 1 ends: Create handoff
+  - Day 2 starts: Orchestrate reads handoff, knows Session 7 is next
+  - Day 2 continues: Start with full context, no mental overhead
 
 ---
 
@@ -440,11 +533,12 @@ ctx                              # Time check
 node dist/commands/context-status.js  # Detailed analysis
 ```
 
-### End-of-Session Workflow
+### End-of-Session Workflow ✨ **IMPROVED**
 ```bash
-git add . && git commit -m "..."           # Save work
-node dist/commands/save-and-restart.js     # Create handoff
-node dist/commands/plan-next-session.js    # Schedule next
+git add . && git commit -m "..."              # Save work
+node dist/commands/save-and-restart.js        # Create handoff
+node dist/commands/orchestrate-next.js        # Generate next session prompt
+# Done! SESSION_N_KICKOFF_PROMPT.md is ready for tomorrow
 ```
 
 ### Crisis Management (Context/Time Running Out)
@@ -473,8 +567,9 @@ Context getting high?
 
 Planning work?
 ├─ Estimate task → node dist/commands/estimate-session.js
-├─ Schedule next → node dist/commands/plan-next-session.js
-└─ Multi-session → node dist/commands/advanced-planning-session.js (soon)
+├─ Overview all plans → node dist/commands/advanced-planning-session.js
+├─ Auto next session → node dist/commands/orchestrate-next.js
+└─ Schedule timing → node dist/commands/plan-next-session.js
 
 Looking for info?
 ├─ Search knowledge → node dist/commands/memory-search.js
@@ -509,8 +604,10 @@ Building/Testing?
 | `context-status.js` | Deep analysis | Planning, troubleshooting |
 | `compact-context.js` | Free space | 50-80% context used |
 | `save-and-restart.js` | Clean start | >80% context OR <1h time |
+| `orchestrate-next.js` ✨ | Next session | **END OF EVERY SESSION** |
+| `advanced-planning-session.js` | Project overview | See all sessions roadmap |
 | `estimate-session.js` | Predict tokens | Planning next work |
-| `plan-next-session.js` | Auto schedule | End of session |
+| `plan-next-session.js` | Auto schedule | Schedule timing |
 | `memory-search.js` | Find solutions | Before implementing |
 | `npm run build` | Compile | After code changes |
 
