@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🚀 Claude Code Optimizer - Smart Dashboard</title>
+  <style>
+    /* ================================
+       DESIGN SYSTEM - Variables
+       ================================ */
+    :root {
+      /* Colors */
+      --bg-primary: #0f1419;
+      --bg-secondary: #1a2332;
+      --bg-card: #1e293b;
+      --bg-card-hover: #243447;
+
+      /* Accents */
+      --accent-green: #00d084;
+      --accent-green-dark: #00a368;
+      --accent-red: #dc2626;
+      --accent-red-dark: #b91c1c;
+      --accent-yellow: #fbbf24;
+      --accent-teal: #14b8a6;
+      --accent-purple: #7c3aed;
+      --accent-blue: #3b82f6;
+
+      /* Text */
+      --text-primary: #e5e7eb;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+
+      /* Borders */
+      --border-color: #334155;
+      --border-radius: 12px;
+      --border-radius-sm: 8px;
+
+      /* Spacing */
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      --spacing-xl: 32px;
+
+      /* Typography */
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      --font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Courier New', monospace;
+    }
+
+    /* ================================
+       RESET & BASE STYLES
+       ================================ */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ================================
+       LAYOUT STRUCTURE
+       ================================ */
+    .dashboard {
+      min-height: 100vh;
+      padding: var(--spacing-lg);
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* ================================
+       HEADER
+       ================================ */
+    .header {
+      text-align: center;
+      margin-bottom: var(--spacing-xl);
+      position: relative;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--accent-blue);
+      margin-bottom: var(--spacing-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-sm);
+    }
+
+    .auto-update-btn {
+      background: var(--accent-green);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 24px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 12px rgba(0, 208, 132, 0.3);
+    }
+
+    .auto-update-btn:hover {
+      background: var(--accent-green-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 208, 132, 0.4);
+    }
+
+    .auto-update-btn.paused {
+      background: var(--text-secondary);
+      box-shadow: none;
+    }
+
+    /* ================================
+       STATUS BAR
+       ================================ */
+    .status-bar {
+      background: linear-gradient(90deg, var(--accent-green), var(--accent-teal));
+      padding: var(--spacing-md);
+      border-radius: var(--border-radius);
+      margin-bottom: var(--spacing-lg);
+      text-align: center;
+      font-weight: 600;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .status-bar.disconnected {
+      background: var(--text-secondary);
+      animation: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+
+    /* ================================
+       HERO CARD - Main Metric
+       ================================ */
+    .hero-card {
+      background: var(--bg-card);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-xl);
+      margin-bottom: var(--spacing-lg);
+      text-align: center;
+      border: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+    }
+
+    .hero-metric {
+      font-size: 4rem;
+      font-weight: 900;
+      color: var(--accent-blue);
+      margin: var(--spacing-md) 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hero-details {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin: var(--spacing-sm) 0;
+    }
+
+    .hero-details code {
+      font-family: var(--font-mono);
+      background: var(--bg-secondary);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      margin-top: var(--spacing-md);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-badge.healthy {
+      background: var(--accent-green);
+      color: white;
+    }
+
+    .status-badge.warning {
+      background: var(--accent-yellow);
+      color: #000;
+    }
+
+    .status-badge.danger {
+      background: var(--accent-red);
+      color: white;
+      animation: danger-pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes danger-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    /* ================================
+       PRIORITY SECTION
+       ================================ */
+    .priority-section {
+      background: linear-gradient(135deg, var(--accent-red), var(--accent-red-dark));
+      border-radius: var(--border-radius);
+      padding: var(--spacing-lg);
+      margin-bottom: var(--spacing-lg);
+      border: 2px solid var(--accent-red-dark);
+    }
+
+    .priority-header {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: var(--spacing-lg);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .priority-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: var(--spacing-md);
+    }
+
+    /* ================================
+       METRIC CARDS
+       ================================ */
+    .metric-card {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: var(--border-radius-sm);
+      padding: var(--spacing-lg);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .card-header {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: var(--spacing-md);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .card-status {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .progress-bar {
+      background: rgba(0, 0, 0, 0.3);
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #fbbf24, #f59e0b);
+      transition: width 0.5s ease;
+      border-radius: 4px;
+    }
+
+    .progress-fill.critical {
+      background: linear-gradient(90deg, #dc2626, #b91c1c);
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-md);
+    }
+
+    .metric-item {
+      background: rgba(0, 0, 0, 0.2);
+      padding: var(--spacing-md);
+      border-radius: var(--border-radius-sm);
+      text-align: center;
+    }
+
+    .metric-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: white;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .metric-label {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.7);
+      margin-top: var(--spacing-xs);
+    }
+
+    /* ================================
+       ANALYTICS SECTION
+       ================================ */
+    .analytics-section {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .section-header {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: var(--spacing-lg);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--spacing-md);
+    }
+
+    .analytics-card {
+      background: var(--bg-card);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-lg);
+      border: 1px solid var(--border-color);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .analytics-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .analytics-card.teal {
+      background: linear-gradient(135deg, var(--accent-teal), #0d9488);
+    }
+
+    .analytics-card.purple {
+      background: linear-gradient(135deg, var(--accent-purple), #6d28d9);
+    }
+
+    .analytics-card.blue {
+      background: linear-gradient(135deg, var(--accent-blue), #2563eb);
+    }
+
+    .grade-display {
+      font-size: 5rem;
+      font-weight: 900;
+      text-align: center;
+      margin: var(--spacing-lg) 0;
+      color: white;
+    }
+
+    .grade-label {
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .grade-description {
+      text-align: center;
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .stats-row {
+      display: flex;
+      justify-content: space-around;
+      margin-top: var(--spacing-lg);
+      padding-top: var(--spacing-lg);
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: white;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.8);
+      margin-top: var(--spacing-xs);
+    }
+
+    /* ================================
+       FOOTER
+       ================================ */
+    .footer {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-top: var(--spacing-xl);
+      padding-top: var(--spacing-lg);
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* ================================
+       RESPONSIVE
+       ================================ */
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 1.8rem;
+      }
+
+      .hero-metric {
+        font-size: 2.5rem;
+      }
+
+      .priority-grid,
+      .analytics-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .metric-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ================================
+       LOADING STATE
+       ================================ */
+    .loading {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s linear infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <!-- HEADER -->
+    <header class="header">
+      <h1>🚀 Claude Code Optimizer - Smart Dashboard</h1>
+      <button class="auto-update-btn" id="autoUpdateBtn">
+        ⚡ SMART AUTO-UPDATE
+      </button>
+    </header>
+
+    <!-- STATUS BAR -->
+    <div class="status-bar" id="statusBar">
+      ⚡ Active session detected - auto-updating every 10s
+    </div>
+
+    <!-- HERO CARD -->
+    <div class="hero-card">
+      <div class="hero-metric" id="totalTokens">0</div>
+      <div class="hero-details">
+        Session: <code id="sessionId">Waiting for data...</code>
+      </div>
+      <div class="hero-details">
+        Model: <span id="modelInfo">--</span>
+      </div>
+      <div class="hero-details">
+        Cost: <span id="costEstimate">$0.00</span>
+      </div>
+      <div class="status-badge healthy" id="statusBadge">HEALTHY</div>
+      <div class="hero-details" style="margin-top: 1rem;">
+        Data Generated: <span id="lastUpdate">--</span>
+      </div>
+    </div>
+
+    <!-- PRIORITY: RATE LIMIT MONITORING -->
+    <section class="priority-section">
+      <h2 class="priority-header">
+        🚨 PRIORITY: Rate Limit Monitoring
+      </h2>
+
+      <div class="priority-grid">
+        <!-- 5-Hour Block -->
+        <div class="metric-card">
+          <div class="card-header">⏱️ 5-Hour Block Progress</div>
+          <div class="card-status" id="fiveHourStatus">CRITICAL: Current 5-hour session usage</div>
+          <div class="progress-bar">
+            <div class="progress-fill critical" id="fiveHourProgress" style="width: 0%"></div>
+          </div>
+          <div class="metric-grid">
+            <div class="metric-item">
+              <div class="metric-value" id="fiveHourTokens">0</div>
+              <div class="metric-label">Billable Tokens</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value" id="fiveHourTime">0h 0m</div>
+              <div class="metric-label">Time Remaining</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weekly Block -->
+        <div class="metric-card">
+          <div class="card-header">📅 Weekly Progress</div>
+          <div class="card-status" id="weeklyStatus">CRITICAL: 7-day rolling usage limit</div>
+          <div class="progress-bar">
+            <div class="progress-fill critical" id="weeklyProgress" style="width: 0%"></div>
+          </div>
+          <div class="metric-grid">
+            <div class="metric-item">
+              <div class="metric-value" id="weeklyTokens">0</div>
+              <div class="metric-label">Billable Tokens</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value" id="weeklyDays">0 days</div>
+              <div class="metric-label">Days Remaining</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ANALYTICS SECTION -->
+    <section class="analytics-section">
+      <h2 class="section-header">🚀 Cache Performance Analytics</h2>
+
+      <div class="analytics-grid">
+        <!-- Cache Efficiency Grade -->
+        <div class="analytics-card teal">
+          <div class="grade-label">Cache Efficiency Grade</div>
+          <div class="grade-description">Based on hit rate and cost savings</div>
+          <div class="grade-display" id="efficiencyGrade">C</div>
+          <div class="grade-description">
+            <strong id="hitRate">9.2%</strong> Cache Hit Rate
+          </div>
+        </div>
+
+        <!-- Cache Cost Savings -->
+        <div class="analytics-card purple">
+          <div class="grade-label">💰 Cache Cost Savings</div>
+          <div class="grade-description">Money saved through caching</div>
+          <div class="stats-row">
+            <div class="stat-item">
+              <div class="stat-value" id="totalSavings">$0</div>
+              <div class="stat-label">Total Savings</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="savingsRate">0%</div>
+              <div class="stat-label">Savings Rate</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cache Token Breakdown -->
+        <div class="analytics-card blue">
+          <div class="grade-label">📊 Cache Token Breakdown</div>
+          <div class="grade-description">Cache creation vs utilization</div>
+          <div class="stats-row">
+            <div class="stat-item">
+              <div class="stat-value" id="tokensCreated">0</div>
+              <div class="stat-label">Created</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="tokensRead">0</div>
+              <div class="stat-label">Read (Hits)</div>
+            </div>
+          </div>
+          <div style="text-align: center; margin-top: 1rem;">
+            <div class="grade-description">
+              Ratio: <strong id="cacheRatio">0:1</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <p>Claude Code Optimizer Dashboard v2.0 | WebSocket: <span id="wsStatus">Connecting...</span></p>
+      <p style="margin-top: 0.5rem;">Last Data Refresh: <span id="refreshTime">Never</span></p>
+    </footer>
+  </div>
+
+  <script>
+    // ================================
+    // WebSocket Connection
+    // ================================
+    let socket = null;
+    let autoUpdate = true;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT_ATTEMPTS = 5;
+    const RECONNECT_DELAY = 3000;
+
+    function connectWebSocket() {
+      console.log('🔌 Connecting to WebSocket server...');
+
+      socket = new WebSocket('ws://localhost:3001');
+
+      socket.onopen = () => {
+        console.log('✅ WebSocket connected');
+        reconnectAttempts = 0;
+        updateWSStatus('Connected', true);
+        updateStatusBar(true);
+      };
+
+      socket.onclose = () => {
+        console.log('❌ WebSocket disconnected');
+        updateWSStatus('Disconnected', false);
+        updateStatusBar(false);
+        attemptReconnect();
+      };
+
+      socket.onerror = (error) => {
+        console.error('❌ WebSocket error:', error);
+        updateWSStatus('Error', false);
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log('📨 Received:', data);
+          handleServerMessage(data);
+        } catch (error) {
+          console.error('Error parsing message:', error);
+        }
+      };
+    }
+
+    function attemptReconnect() {
+      if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+        reconnectAttempts++;
+        console.log(`🔄 Reconnecting... (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
+        setTimeout(connectWebSocket, RECONNECT_DELAY);
+      } else {
+        console.log('❌ Max reconnection attempts reached');
+        updateWSStatus('Failed - Refresh page', false);
+      }
+    }
+
+    function updateWSStatus(status, connected) {
+      const wsStatus = document.getElementById('wsStatus');
+      wsStatus.textContent = status;
+      wsStatus.style.color = connected ? 'var(--accent-green)' : 'var(--accent-red)';
+    }
+
+    function updateStatusBar(connected) {
+      const statusBar = document.getElementById('statusBar');
+      if (connected && autoUpdate) {
+        statusBar.textContent = '⚡ Active session detected - auto-updating every 10s';
+        statusBar.classList.remove('disconnected');
+      } else {
+        statusBar.textContent = '⚠️ Disconnected - waiting for server';
+        statusBar.classList.add('disconnected');
+      }
+    }
+
+    // ================================
+    // Message Handlers
+    // ================================
+    function handleServerMessage(data) {
+      updateRefreshTime();
+
+      switch (data.type) {
+        case 'session:start':
+          handleSessionStart(data.data);
+          break;
+        case 'session:tokens':
+          handleTokenUpdate(data.data);
+          break;
+        case 'quota:update':
+          handleQuotaUpdate(data.data);
+          break;
+        case 'context:update':
+          handleContextUpdate(data.data);
+          break;
+        case 'session:complete':
+          handleSessionComplete(data.data);
+          break;
+        default:
+          console.log('Unknown message type:', data.type);
+      }
+    }
+
+    function handleSessionStart(data) {
+      document.getElementById('sessionId').textContent = data.sessionId || 'Unknown';
+      document.getElementById('modelInfo').textContent = data.model || '--';
+    }
+
+    function handleTokenUpdate(data) {
+      const tokens = data.totalTokens || 0;
+      animateValue('totalTokens', 0, tokens, 1000, formatLargeNumber);
+
+      // Update cost estimate ($15 per 1M tokens average)
+      const cost = (tokens / 1000000) * 15;
+      document.getElementById('costEstimate').textContent = `$${cost.toFixed(2)}`;
+
+      // Update status badge
+      updateStatusBadge(tokens);
+    }
+
+    function handleQuotaUpdate(data) {
+      // 5-Hour Block (1M token limit)
+      const fiveHourPercent = Math.min((data.fiveHourTokens / 1000000) * 100, 100);
+      document.getElementById('fiveHourProgress').style.width = fiveHourPercent + '%';
+      document.getElementById('fiveHourTokens').textContent = formatLargeNumber(data.fiveHourTokens);
+      document.getElementById('fiveHourTime').textContent = data.fiveHourRemaining || '0h 0m';
+
+      // Weekly Block (assume 5M limit for demo)
+      const weeklyPercent = Math.min((data.weeklyTokens / 5000000) * 100, 100);
+      document.getElementById('weeklyProgress').style.width = weeklyPercent + '%';
+      document.getElementById('weeklyTokens').textContent = formatLargeNumber(data.weeklyTokens);
+      document.getElementById('weeklyDays').textContent = data.weeklyDaysRemaining || '0 days';
+    }
+
+    function handleContextUpdate(data) {
+      // Update analytics cards with context data
+      document.getElementById('hitRate').textContent = (data.hitRate || 9.2) + '%';
+      document.getElementById('efficiencyGrade').textContent = calculateGrade(data.hitRate || 9.2);
+    }
+
+    function handleSessionComplete(data) {
+      console.log('✅ Session complete:', data);
+      document.getElementById('statusBadge').textContent = 'COMPLETE';
+      document.getElementById('statusBadge').className = 'status-badge healthy';
+    }
+
+    // ================================
+    // UI Update Functions
+    // ================================
+    function updateStatusBadge(tokens) {
+      const badge = document.getElementById('statusBadge');
+
+      if (tokens < 100000) {
+        badge.textContent = 'HEALTHY';
+        badge.className = 'status-badge healthy';
+      } else if (tokens < 500000) {
+        badge.textContent = 'WARNING';
+        badge.className = 'status-badge warning';
+      } else {
+        badge.textContent = 'DANGER';
+        badge.className = 'status-badge danger';
+      }
+    }
+
+    function animateValue(elementId, start, end, duration, formatter = null) {
+      const element = document.getElementById(elementId);
+      const startTime = Date.now();
+
+      function update() {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const current = Math.floor(start + (end - start) * progress);
+
+        element.textContent = formatter ? formatter(current) : current;
+
+        if (progress < 1) {
+          requestAnimationFrame(update);
+        }
+      }
+
+      update();
+    }
+
+    function formatLargeNumber(num) {
+      if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'M';
+      } else if (num >= 1000) {
+        return (num / 1000).toFixed(1) + 'K';
+      }
+      return num.toString();
+    }
+
+    function calculateGrade(hitRate) {
+      if (hitRate >= 90) return 'A';
+      if (hitRate >= 80) return 'B';
+      if (hitRate >= 70) return 'C';
+      if (hitRate >= 60) return 'D';
+      return 'F';
+    }
+
+    function updateRefreshTime() {
+      const now = new Date();
+      document.getElementById('refreshTime').textContent = now.toLocaleTimeString();
+      document.getElementById('lastUpdate').textContent = now.toLocaleString();
+    }
+
+    // ================================
+    // Auto-Update Toggle
+    // ================================
+    document.getElementById('autoUpdateBtn').addEventListener('click', () => {
+      autoUpdate = !autoUpdate;
+      const btn = document.getElementById('autoUpdateBtn');
+
+      if (autoUpdate) {
+        btn.textContent = '⚡ SMART AUTO-UPDATE';
+        btn.classList.remove('paused');
+        updateStatusBar(socket && socket.readyState === WebSocket.OPEN);
+      } else {
+        btn.textContent = '⏸️ AUTO-UPDATE PAUSED';
+        btn.classList.add('paused');
+        document.getElementById('statusBar').textContent = '⏸️ Auto-update paused';
+      }
+    });
+
+    // ================================
+    // Mock Data for Demo (Remove when live)
+    // ================================
+    function loadMockData() {
+      console.log('📊 Loading mock data for demo...');
+
+      // Simulate received data
+      setTimeout(() => {
+        handleSessionStart({ sessionId: 'bbd4f15f-33e1-43d8-9...', model: 'claude-sonnet-4-20250514' });
+        handleTokenUpdate({ totalTokens: 164000 });
+        handleQuotaUpdate({
+          fiveHourTokens: 280000,
+          fiveHourRemaining: '1h 25m',
+          weeklyTokens: 2800000,
+          weeklyDaysRemaining: '4 days'
+        });
+        handleContextUpdate({ hitRate: 9.2 });
+
+        // Update analytics
+        document.getElementById('totalSavings').textContent = '$4077.32';
+        document.getElementById('savingsRate').textContent = '31.4%';
+        document.getElementById('tokensCreated').textContent = '961.4K';
+        document.getElementById('tokensRead').textContent = '1.5M';
+        document.getElementById('cacheRatio').textContent = '0.64:1';
+      }, 1000);
+    }
+
+    // ================================
+    // Initialize
+    // ================================
+    window.addEventListener('load', () => {
+      console.log('🚀 Dashboard initializing...');
+      connectWebSocket();
+
+      // Load mock data if server not available (demo mode)
+      setTimeout(() => {
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+          console.log('📊 Running in demo mode with mock data');
+          loadMockData();
+        }
+      }, 2000);
+    });
+  </script>
+</body>
+</html>

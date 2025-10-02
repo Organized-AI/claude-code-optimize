@@ -21,6 +21,10 @@ Claude Code Optimizer automatically analyzes your codebase complexity and genera
 - 🧠 **Session Memory**: Cumulative project knowledge across all sessions
 - 🔮 **Token Estimation**: ML-powered prediction for session planning
 - ⏰ **Session Automation**: Schedule sessions with macOS automation
+- 📊 **Memory Analytics**: Deep insights from session history
+- 🔍 **Memory Search**: Find decisions, objectives, and tasks
+- 📈 **Trend Analysis**: Track efficiency and patterns over time
+- 💡 **Smart Insights**: Actionable recommendations for improvement
 
 ## 🚀 Quick Start
 
@@ -48,12 +52,17 @@ context-status                             # View context window analysis
 compact-context                            # Free up context space
 save-and-restart                           # Create handoff and restart fresh
 
-# Token Estimation (NEW - Session 6A)
+# Token Estimation
 estimate-session SESSION_5_PLAN.md         # Estimate tokens for a session plan
-                                           # - Analyzes phases and complexity
-                                           # - Provides low/mid/high estimates
-                                           # - Checks quota fit
-                                           # - ML learning improves over time
+
+# Memory Analytics (NEW - Session 8)
+memory-stats                               # View session statistics
+memory-search "keyword"                    # Search decisions, objectives, tasks
+memory-analytics                           # Generate trends and predictions
+memory-insights                            # Get actionable recommendations
+memory-report                              # Generate beautiful HTML report
+memory-export backup.json                  # Export memory for backup
+memory-import backup.json                  # Import memory (merge or replace)
 
 # Calendar Integration
 node dist/cli.js calendar schedule ./project

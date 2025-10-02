@@ -10,7 +10,14 @@
     "context-status": "./dist/commands/context-status.js",
     "compact-context": "./dist/commands/compact-context.js",
     "save-and-restart": "./dist/commands/save-and-restart.js",
-    "estimate-session": "./dist/commands/estimate-session.js"
+    "estimate-session": "./dist/commands/estimate-session.js",
+    "memory-stats": "./dist/commands/memory-stats.js",
+    "memory-search": "./dist/commands/memory-search.js",
+    "memory-export": "./dist/commands/memory-export.js",
+    "memory-import": "./dist/commands/memory-import.js",
+    "memory-report": "./dist/commands/memory-report.js",
+    "memory-analytics": "./dist/memory-analytics.js",
+    "memory-insights": "./dist/memory-insights.js"
   },
   "scripts": {
     "build": "tsc",
@@ -49,6 +56,7 @@
     "@types/inquirer": "^9.0.0",
     "@types/node": "^20.0.0",
     "@vitest/ui": "^1.6.0",
+    "socket.io-client": "^4.8.1",
     "typescript": "^5.4.0",
     "vitest": "^1.6.0"
   },
