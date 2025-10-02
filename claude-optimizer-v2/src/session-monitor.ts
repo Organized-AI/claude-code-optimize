@@ -7,6 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
 import { QuotaTracker } from './quota-tracker.js';
+import { ContextTracker } from './context-tracker.js';
 
 export interface SessionWindow {
   id: string;
@@ -29,6 +30,7 @@ export class SessionMonitor {
   private sessionsLogPath: string;
   private trackerPath: string;
   private quotaTracker: QuotaTracker;
+  private contextTracker: ContextTracker;
   private activeSessions: Map<string, SessionWindow> = new Map();
 
   constructor() {
@@ -36,6 +38,7 @@ export class SessionMonitor {
     this.sessionsLogPath = path.join(home, '.claude', 'logs', 'sessions.jsonl');
     this.trackerPath = path.join(home, '.claude', 'session-tracker.json');
     this.quotaTracker = new QuotaTracker();
+    this.contextTracker = new ContextTracker();
   }
 
   /**
@@ -153,7 +156,7 @@ export class SessionMonitor {
   /**
    * Handle session start event
    */
-  private handleSessionStart(event: SessionEvent): void {
+  private async handleSessionStart(event: SessionEvent): Promise<void> {
     const startTime = new Date(event.timestamp);
     const endTime = new Date(startTime.getTime() + 5 * 60 * 60 * 1000);
 
@@ -173,6 +176,9 @@ export class SessionMonitor {
     // Check quota status
     const quotaStatus = this.quotaTracker.getStatus();
 
+    // Check context status
+    const contextUsage = await this.contextTracker.estimateCurrentContext();
+
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('🎯 New Session Started');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -184,10 +190,19 @@ export class SessionMonitor {
     }
     console.log('');
     console.log(`Token Quota: ${quotaStatus.remaining.toLocaleString()} / ${quotaStatus.limit.toLocaleString()} (${100 - quotaStatus.percent}% available)`);
+    console.log(`Context Window: ${contextUsage.totalTokens.toLocaleString()} / 180,000 (${contextUsage.percentUsed.toFixed(1)}% used)`);
 
-    if (quotaStatus.percent > 75) {
+    // Combined warnings
+    if (quotaStatus.percent > 75 && contextUsage.percentUsed > 75) {
+      console.log('⚠️  CRITICAL: Both quota and context are high!');
+      console.log(`   Quota resets in: ${quotaStatus.timeUntilReset}`);
+      console.log(`   Consider: save-and-restart`);
+    } else if (quotaStatus.percent > 75) {
       console.log('⚠️  WARNING: Low quota remaining!');
       console.log(`   Resets in: ${quotaStatus.timeUntilReset}`);
+    } else if (contextUsage.percentUsed > 75) {
+      console.log('⚠️  WARNING: High context usage!');
+      console.log(`   Consider: compact-context or save-and-restart`);
     }
 
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -196,10 +211,11 @@ export class SessionMonitor {
     // Schedule warnings
     this.scheduleWarnings(session);
 
-    // Desktop notification
+    // Desktop notification with dual status
+    const contextStatus = contextUsage.percentUsed > 50 ? ` | Context: ${contextUsage.percentUsed.toFixed(0)}%` : '';
     this.sendNotification(
       '🎯 Claude Session Started',
-      `Working in ${path.basename(session.cwd)}. Quota: ${quotaStatus.remaining.toLocaleString()} tokens`
+      `Working in ${path.basename(session.cwd)}. Quota: ${quotaStatus.remaining.toLocaleString()} tokens${contextStatus}`
     );
   }
 
@@ -240,7 +256,7 @@ export class SessionMonitor {
   /**
    * Handle tool result event (for token estimation)
    */
-  private handleToolResult(event: SessionEvent): void {
+  private async handleToolResult(event: SessionEvent): Promise<void> {
     const session = this.activeSessions.get(event.session_id);
     if (!session) return;
 
@@ -250,9 +266,19 @@ export class SessionMonitor {
     session.tokensUsed += tokens;
     this.quotaTracker.trackTokenUsage(session.id, tokens);
 
+    // Track in context tracker too
+    if (event.tool === 'Read') {
+      this.contextTracker.trackFileRead(event.result?.file_path || 'unknown', tokens);
+    } else {
+      this.contextTracker.trackToolResult(event.tool, tokens);
+    }
+
     // Update tracker periodically (every 1000 tokens)
     if (session.tokensUsed % 1000 < tokens) {
       this.saveTracker();
+
+      // Check for combined warnings
+      await this.checkCombinedAlerts();
     }
   }
 
@@ -338,15 +364,6 @@ export class SessionMonitor {
     );
   }
 
-  /**
-   * Send desktop notification
-   */
-  private sendNotification(title: string, message: string): void {
-    if (process.platform === 'darwin') {
-      const { exec } = require('child_process');
-      exec(`osascript -e 'display notification "${message}" with title "${title}" sound name "Ping"'`);
-    }
-  }
 
   /**
    * Save tracker state
@@ -378,5 +395,54 @@ export class SessionMonitor {
       s => s.status === 'active'
     );
     return active || null;
+  }
+
+  /**
+   * Check for combined quota + context alerts
+   */
+  private async checkCombinedAlerts(): Promise<void> {
+    const quotaStatus = this.quotaTracker.getStatus();
+    const contextUsage = await this.contextTracker.estimateCurrentContext();
+
+    const quotaPercent = quotaStatus.percent;
+    const contextPercent = contextUsage.percentUsed;
+
+    // Critical: Both approaching limits
+    if (quotaPercent >= 80 && contextPercent >= 80) {
+      this.sendNotification(
+        '🚨 CRITICAL ALERT',
+        'Both quota and context approaching limits! Run: save-and-restart',
+        'critical'
+      );
+    }
+    // Quota high, context moderate
+    else if (quotaPercent >= 80 && contextPercent >= 50) {
+      this.sendNotification(
+        '⚠️ Dual Warning',
+        'Quota is low and context is building. Consider planning next session.',
+        'high'
+      );
+    }
+    // Context high, quota moderate
+    else if (contextPercent >= 80 && quotaPercent >= 50) {
+      this.sendNotification(
+        '⚠️ Context Warning',
+        'Context is high. Run: compact-context or save-and-restart',
+        'high'
+      );
+    }
+  }
+
+  /**
+   * Send desktop notification with urgency
+   */
+  private sendNotification(title: string, message: string, urgency: 'normal' | 'high' | 'critical' = 'normal'): void {
+    console.log(`${title}: ${message}`);
+
+    if (process.platform === 'darwin') {
+      const sound = urgency === 'critical' ? 'Basso' : 'Ping';
+      const { exec } = require('child_process');
+      exec(`osascript -e 'display notification "${message}" with title "${title}" sound name "${sound}"'`);
+    }
   }
 }

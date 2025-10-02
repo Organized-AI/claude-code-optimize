@@ -10,6 +10,9 @@ import { ProjectAnalyzer } from './project-analyzer.js';
 import { OptimizerDatabase } from './database.js';
 import { CalendarService } from './calendar-service.js';
 import { CalendarWatcher } from './calendar-watcher.js';
+import { QuotaTracker } from './quota-tracker.js';
+import { HandoffManager } from './handoff-manager.js';
+import { ContextTracker } from './context-tracker.js';
 import ora from 'ora';
 import chalk from 'chalk';
 import * as path from 'path';
@@ -239,6 +242,161 @@ function getComplexityDisplay(complexity: number): string {
 
   return color(`${complexity}/10 (${label})`);
 }
+
+/**
+ * Status command - Show quota and automation status
+ */
+program
+  .command('status')
+  .description('Show quota usage and automation status')
+  .action(async () => {
+    try {
+      const quotaTracker = new QuotaTracker();
+      const status = quotaTracker.getStatus();
+      const handoffManager = new HandoffManager();
+      const handoffs = handoffManager.listHandoffs();
+
+      console.log(chalk.bold('\n🎯 TOKEN QUOTA (5-Hour Rolling Window)\n'));
+      console.log(chalk.gray('═'.repeat(60)));
+
+      // Usage bar
+      const barWidth = 40;
+      const filled = Math.round((status.percent / 100) * barWidth);
+      const empty = barWidth - filled;
+      const bar = '█'.repeat(filled) + '░'.repeat(empty);
+
+      // Color based on threshold
+      let barColor = chalk.green;
+      if (status.percent >= 95) barColor = chalk.red;
+      else if (status.percent >= 90) barColor = chalk.red;
+      else if (status.percent >= 80) barColor = chalk.yellow;
+      else if (status.percent >= 50) barColor = chalk.blue;
+
+      console.log(`Plan:         ${chalk.bold(status.plan.toUpperCase())}`);
+      console.log(`Used:         ${status.used.toLocaleString()} tokens (${status.percent}%)`);
+      console.log(`Remaining:    ${status.remaining.toLocaleString()} tokens`);
+      console.log(`Usage:        ${barColor(bar)} ${status.percent}%`);
+      console.log(`Reset:        ${status.resetTime.toLocaleString()}`);
+      console.log(`Time Left:    ${status.timeUntilReset}\n`);
+
+      // Context Window Status
+      try {
+        const contextTracker = new ContextTracker();
+        const contextUsage = await contextTracker.estimateCurrentContext();
+
+        console.log(chalk.bold('📝 CONTEXT WINDOW (Session)\n'));
+        console.log(chalk.gray('═'.repeat(60)));
+
+        const contextBarWidth = 40;
+        const contextFilled = Math.round((contextUsage.percentUsed / 100) * contextBarWidth);
+        const contextEmpty = contextBarWidth - contextFilled;
+        const contextBar = '█'.repeat(contextFilled) + '░'.repeat(contextEmpty);
+
+        let contextBarColor = chalk.green;
+        if (contextUsage.percentUsed >= 90) contextBarColor = chalk.red;
+        else if (contextUsage.percentUsed >= 80) contextBarColor = chalk.yellow;
+        else if (contextUsage.percentUsed >= 50) contextBarColor = chalk.blue;
+
+        let contextStatusDisplay = '';
+        switch (contextUsage.status) {
+          case 'fresh':
+          case 'healthy':
+            contextStatusDisplay = chalk.green('🟢 HEALTHY - Normal operation');
+            break;
+          case 'moderate':
+            contextStatusDisplay = chalk.blue('🔵 MODERATE - Active session');
+            break;
+          case 'warning':
+            contextStatusDisplay = chalk.yellow('🟡 WARNING - Monitor usage');
+            break;
+          case 'danger':
+            contextStatusDisplay = chalk.red('🟠 DANGER - Consider compaction');
+            break;
+          case 'critical':
+            contextStatusDisplay = chalk.red.bold('🔴 CRITICAL - Compact or restart!');
+            break;
+        }
+
+        console.log(`Model:        Claude Sonnet 4.5`);
+        console.log(`Used:         ${contextUsage.totalTokens.toLocaleString()} / 180,000 tokens (${contextUsage.percentUsed.toFixed(1)}%)`);
+        console.log(`Status:       ${contextStatusDisplay}`);
+        console.log(`Usage:        ${contextBarColor(contextBar)} ${contextUsage.percentUsed.toFixed(1)}%`);
+        console.log(`Est. Hours:   ~${contextUsage.estimatedHoursRemaining.toFixed(1)} hours remaining\n`);
+
+        // Combined Health
+        console.log(chalk.bold('⚡ COMBINED HEALTH\n'));
+        console.log(chalk.gray('─'.repeat(60)));
+
+        const quotaCritical = status.percent >= 80;
+        const contextCritical = contextUsage.percentUsed >= 80;
+
+        if (quotaCritical && contextCritical) {
+          console.log(chalk.red.bold('🔴 CRITICAL: Both quota and context approaching limits!'));
+          console.log(chalk.red('   Immediate action required:'));
+          console.log(chalk.red('   • Run: ') + chalk.cyan('save-and-restart'));
+          console.log(chalk.red('   • Or wait for quota reset and compact context'));
+        } else if (quotaCritical) {
+          console.log(chalk.yellow('⚠️  WARNING: Quota is low'));
+          console.log(chalk.yellow('   • Context is healthy'));
+          console.log(chalk.yellow('   • Run: ') + chalk.cyan('plan-next-session'));
+        } else if (contextCritical) {
+          console.log(chalk.yellow('⚠️  WARNING: Context is high'));
+          console.log(chalk.yellow('   • Quota is healthy'));
+          console.log(chalk.yellow('   • Run: ') + chalk.cyan('compact-context') + chalk.yellow(' or ') + chalk.cyan('save-and-restart'));
+        } else {
+          console.log(chalk.green('✅ GOOD: Both quota and context are healthy'));
+          console.log(chalk.green('   Continue working normally'));
+        }
+
+        console.log('');
+
+      } catch (contextError) {
+        // Context tracking not initialized - skip this section
+        console.log(chalk.gray('📝 Context tracking not initialized yet\n'));
+      }
+
+      // Recommendation
+      console.log(chalk.bold('📊 QUOTA STATUS\n'));
+      console.log(chalk.gray('─'.repeat(60)));
+      console.log(status.recommendation);
+      console.log('');
+
+      // Scheduled sessions
+      const pendingHandoffs = handoffs.filter(h => h.status === 'pending');
+
+      if (pendingHandoffs.length > 0) {
+        console.log(chalk.bold('\n🤖 SCHEDULED SESSIONS\n'));
+        console.log(chalk.gray('═'.repeat(60)));
+
+        pendingHandoffs.forEach((handoff, i) => {
+          console.log(chalk.cyan(`${i + 1}. ${handoff.projectName}`));
+          console.log(`   Scheduled: ${handoff.scheduledFor ? handoff.scheduledFor.toLocaleString() : 'Not scheduled'}`);
+          console.log(`   Estimated: ${handoff.estimatedTokens.toLocaleString()} tokens`);
+          console.log(`   Status: ${handoff.status}\n`);
+        });
+      }
+
+      // Next steps
+      console.log(chalk.bold('💡 ACTIONS\n'));
+      console.log(chalk.gray('─'.repeat(60)));
+
+      if (status.percent >= 80) {
+        console.log(chalk.yellow('⚠️  Time to plan next session!'));
+        console.log(chalk.gray('   Run: ') + chalk.cyan('plan-next-session'));
+      } else if (status.percent >= 50) {
+        console.log(chalk.blue('💡 Monitor your usage'));
+        console.log(chalk.gray('   Check status: ') + chalk.cyan('claude-optimizer status'));
+      } else {
+        console.log(chalk.green('✅ Quota is healthy'));
+        console.log(chalk.gray('   Continue working normally'));
+      }
+      console.log('');
+
+    } catch (error) {
+      console.error(chalk.red('\nError:'), (error as Error).message);
+      process.exit(1);
+    }
+  });
 
 /**
  * Calendar commands group

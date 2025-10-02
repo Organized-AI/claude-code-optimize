@@ -5,7 +5,12 @@
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
-    "claude-optimizer": "./dist/cli.js"
+    "claude-optimizer": "./dist/cli.js",
+    "plan-next-session": "./dist/commands/plan-next-session.js",
+    "context-status": "./dist/commands/context-status.js",
+    "compact-context": "./dist/commands/compact-context.js",
+    "save-and-restart": "./dist/commands/save-and-restart.js",
+    "estimate-session": "./dist/commands/estimate-session.js"
   },
   "scripts": {
     "build": "tsc",

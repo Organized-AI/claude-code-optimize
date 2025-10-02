@@ -14,6 +14,13 @@ Claude Code Optimizer automatically analyzes your codebase complexity and genera
 - 💾 **SQLite Storage**: Caches analysis results for instant retrieval
 - 🎨 **Beautiful CLI**: Colorful, informative command-line interface
 - 🔄 **Technology Detection**: Automatically identifies frameworks and libraries
+- 🎯 **Quota Tracking**: Monitor token usage across 5-hour rolling windows
+- 📝 **Context Monitoring**: Track session context window (0-180k tokens)
+- 🧹 **Context Compaction**: Three-level compaction system to free up space
+- 💾 **Session Handoffs**: Preserve context between sessions
+- 🧠 **Session Memory**: Cumulative project knowledge across all sessions
+- 🔮 **Token Estimation**: ML-powered prediction for session planning
+- ⏰ **Session Automation**: Schedule sessions with macOS automation
 
 ## 🚀 Quick Start
 
@@ -28,17 +35,30 @@ npm run build
 ### Usage
 
 ```bash
-# Analyze a project
+# Project Analysis
 node dist/cli.js analyze ./my-project
-
-# List all analyzed projects
 node dist/cli.js list
-
-# Show detailed analysis
 node dist/cli.js show ./my-project
-
-# Delete project analysis
 node dist/cli.js delete ./my-project
+
+# Session Management
+node dist/cli.js status                    # Show quota and context status
+plan-next-session                          # Plan your next session (at 80% quota)
+context-status                             # View context window analysis
+compact-context                            # Free up context space
+save-and-restart                           # Create handoff and restart fresh
+
+# Token Estimation (NEW - Session 6A)
+estimate-session SESSION_5_PLAN.md         # Estimate tokens for a session plan
+                                           # - Analyzes phases and complexity
+                                           # - Provides low/mid/high estimates
+                                           # - Checks quota fit
+                                           # - ML learning improves over time
+
+# Calendar Integration
+node dist/cli.js calendar schedule ./project
+node dist/cli.js calendar list
+node dist/cli.js calendar watch
 ```
 
 ## 📊 Example Output
@@ -122,6 +142,46 @@ SQLite database is stored in `./data/claude-optimizer.db` with tables:
 - `phase_objectives` - Objectives for each phase
 - `risk_factors` - Identified risks
 
+## 🧠 Session Memory System (NEW - Session 7)
+
+The session memory system preserves cumulative project knowledge across all sessions, creating true long-term continuity.
+
+### Features
+
+- **Automatic Tech Stack Detection**: Identifies languages, frameworks, and tools from project files
+- **Cumulative Decision Tracking**: Preserves all key decisions across sessions
+- **Context Injection**: Every new session starts with full historical context
+- **Session History**: Complete record of objectives, outcomes, and token usage
+
+### Storage
+
+Project memory is stored in `~/.claude/project-memory/{project-hash}.json` with:
+
+```json
+{
+  "projectPath": "/path/to/project",
+  "projectName": "my-project",
+  "totalSessions": 5,
+  "sessions": [ /* Array of session histories */ ],
+  "cumulativeContext": {
+    "techStack": ["TypeScript", "React", "Node.js"],
+    "architecture": "Web Application",
+    "testingFramework": "Vitest",
+    "buildSystem": "Vite",
+    "keyDecisions": [ /* All important decisions */ ]
+  }
+}
+```
+
+### Integration
+
+Memory integrates automatically with:
+- **Handoff Manager**: Injects memory into handoff files
+- **Session Planning**: Uses history for better estimates
+- **Context Tracking**: Preserves long-term knowledge
+
+No manual intervention required - memory works transparently in the background.
+
 ## 📚 API Reference
 
 ### ProjectAnalyzer
@@ -166,35 +226,59 @@ npm run test:ui
 npm run build && node dist/cli.js analyze ./test-project
 ```
 
-## 📋 Session 1 Status
+## 📋 Implementation Status
 
-### ✅ Completed
+### ✅ Session 1-5 Completed
 
+**Session 1: Core Analysis**
 - [x] TypeScript project setup
 - [x] File scanner utility
 - [x] Claude Agent SDK integration
 - [x] SQLite database schema
 - [x] CLI command interface
-- [x] Project analysis works end-to-end
-- [x] Technology detection
-- [x] Risk assessment
-- [x] Caching system
 
-### 🎯 Success Criteria Met
+**Session 2-3: Calendar Integration**
+- [x] Google Calendar OAuth flow
+- [x] Event creation from analysis
+- [x] Calendar watcher service
+- [x] Session automation
 
-✅ `claude-optimizer analyze ./test-project` works end-to-end
-✅ Complexity analysis accurate
-✅ Session phases logically generated
-✅ Database stores and retrieves correctly
-✅ CLI output is clear and helpful
+**Session 4: Quota & Handoffs**
+- [x] Quota tracking (5-hour windows)
+- [x] Session handoff system
+- [x] /plan-next-session command
+- [x] Automation dashboard
 
-## 🚀 Next Steps (Session 2)
+**Session 5: Context Window Monitoring** (NEW!)
+- [x] Context tracker module
+- [x] Three-level compaction system
+- [x] /context-status command
+- [x] /compact-context command
+- [x] /save-and-restart command
+- [x] Dual quota + context monitoring
 
-- [ ] Google Calendar integration
-- [ ] OAuth 2.0 authentication flow
-- [ ] Calendar event creation from analysis
-- [ ] Session scheduling automation
-- [ ] Calendar watcher service
+### 🎯 Session Commands
+
+**Monitoring**
+- `claude-optimizer status` - Show quota and context status
+- `context-status` - Detailed context window analysis
+- `plan-next-session` - Plan next session at 80% quota
+
+**Context Management**
+- `compact-context` - Free up context space (soft/strategic/emergency)
+- `save-and-restart` - Create handoff and restart with fresh context
+
+**Calendar Integration**
+- `claude-optimizer calendar schedule ./project` - Create session schedule
+- `claude-optimizer calendar list` - View upcoming sessions
+- `claude-optimizer calendar watch` - Auto-start scheduled sessions
+
+## 🚀 Next Steps (Session 6)
+
+- [ ] Token estimation for task planning (Session 6A)
+- [ ] /task-estimate command
+- [ ] Enhanced automation (Session 6B)
+- [ ] Notification system improvements
 
 ## 📄 License
 

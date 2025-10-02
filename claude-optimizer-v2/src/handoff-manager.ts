@@ -6,13 +6,16 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { SessionHandoff, HandoffMetadata } from './types/handoff.js';
+import { SessionMemoryManager, SessionHistory } from './session-memory.js';
 
 export class HandoffManager {
   private handoffDir: string;
+  private memoryManager: SessionMemoryManager;
 
   constructor(dataDir?: string) {
     const home = process.env.HOME || process.env.USERPROFILE || '';
     this.handoffDir = path.join(dataDir || path.join(home, '.claude'), 'session-handoffs');
+    this.memoryManager = new SessionMemoryManager(dataDir);
 
     // Ensure directory exists
     if (!fs.existsSync(this.handoffDir)) {
@@ -21,9 +24,9 @@ export class HandoffManager {
   }
 
   /**
-   * Create a new handoff file
+   * Create a new handoff file with project memory integration
    */
-  createHandoff(handoff: Omit<SessionHandoff, 'fromSessionId' | 'createdAt'>): string {
+  async createHandoff(handoff: Omit<SessionHandoff, 'fromSessionId' | 'createdAt'>): Promise<string> {
     const sessionId = this.generateSessionId();
     const timestamp = new Date().toISOString();
 
@@ -33,7 +36,27 @@ export class HandoffManager {
       createdAt: timestamp
     };
 
-    const markdown = this.generateMarkdown(completeHandoff);
+    // Load project memory
+    const memory = await this.memoryManager.loadProjectMemory(handoff.projectPath);
+
+    // Create session history entry
+    const sessionHistory: SessionHistory = {
+      sessionId,
+      sessionNumber: memory.totalSessions + 1,
+      startTime: new Date(),
+      endTime: new Date(),
+      objectives: handoff.nextObjectives.map(obj => obj.description),
+      completedTasks: handoff.accomplishments,
+      keyDecisions: handoff.keyDecisions,
+      tokensUsed: handoff.estimatedTokens,
+      filesModified: handoff.currentState.filesModified || []
+    };
+
+    // Save session to memory
+    await this.memoryManager.saveSessionMemory(handoff.projectPath, sessionHistory);
+
+    // Generate markdown with memory context
+    const markdown = this.generateMarkdown(completeHandoff, memory);
     const filename = `handoff-${sessionId}.md`;
     const filepath = path.join(this.handoffDir, filename);
 
@@ -86,12 +109,20 @@ export class HandoffManager {
   /**
    * Generate markdown format from handoff object
    */
-  private generateMarkdown(handoff: SessionHandoff): string {
+  private generateMarkdown(handoff: SessionHandoff, memory?: any): string {
     const scheduledTime = handoff.scheduledFor
       ? new Date(handoff.scheduledFor).toLocaleString()
       : 'Not scheduled';
 
-    let md = `# Session Handoff: ${handoff.projectName}\n\n`;
+    let md = '';
+
+    // Inject project memory context at the top
+    if (memory) {
+      md += this.memoryManager.injectContextOnStart(memory);
+      md += '\n---\n\n';
+    }
+
+    md += `# Session Handoff: ${handoff.projectName}\n\n`;
     md += `**From Session**: ${handoff.fromSessionId}\n`;
     md += `**To Session**: ${handoff.toSessionId || '(auto-generated at launch)'}\n`;
     md += `**Scheduled For**: ${scheduledTime}\n`;
