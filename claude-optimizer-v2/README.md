@@ -25,6 +25,10 @@ Claude Code Optimizer automatically analyzes your codebase complexity and genera
 - 🔍 **Memory Search**: Find decisions, objectives, and tasks
 - 📈 **Trend Analysis**: Track efficiency and patterns over time
 - 💡 **Smart Insights**: Actionable recommendations for improvement
+- 📊 **Live Dashboard**: Real-time session monitoring with WebSocket updates
+- 🎨 **Moonlock Design**: Beautiful, production-ready dashboard UI
+- 📉 **Session History**: Complete analytics from JSONL session files
+- 💰 **Cost Tracking**: Real-time token usage and cost calculations
 
 ## 🚀 Quick Start
 
@@ -48,6 +52,12 @@ node dist/cli.js delete ./my-project
 # Session Management
 node dist/cli.js status                    # Show quota and context status
 plan-next-session                          # Plan your next session (at 80% quota)
+
+# Real-Time Dashboard
+npm run dashboard                          # Launch live dashboard
+node dist/cli.js dashboard                 # Alternative launch method
+node dist/cli.js dashboard --port 3002     # Custom port
+node dist/cli.js dashboard --no-browser    # Don't auto-open browser
 context-status                             # View context window analysis
 compact-context                            # Free up context space
 save-and-restart                           # Create handoff and restart fresh

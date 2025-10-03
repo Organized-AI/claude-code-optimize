@@ -10,9 +10,11 @@ import { ProjectAnalyzer } from './project-analyzer.js';
 import { OptimizerDatabase } from './database.js';
 import { CalendarService } from './calendar-service.js';
 import { CalendarWatcher } from './calendar-watcher.js';
+import { CalendarServer } from './calendar-server.js';
 import { QuotaTracker } from './quota-tracker.js';
 import { HandoffManager } from './handoff-manager.js';
 import { ContextTracker } from './context-tracker.js';
+import { launchDashboard } from './commands/dashboard.js';
 import ora from 'ora';
 import chalk from 'chalk';
 import * as path from 'path';
@@ -399,6 +401,23 @@ program
   });
 
 /**
+ * Dashboard command - Launch live dashboard
+ */
+program
+  .command('dashboard')
+  .description('Launch real-time dashboard with live session data')
+  .option('--port <port>', 'WebSocket server port (default: 3001)', '3001')
+  .option('--no-browser', 'Don\'t auto-open browser')
+  .option('--simulation', 'Use mock data instead of live data')
+  .action(async (options) => {
+    await launchDashboard({
+      port: parseInt(options.port),
+      noBrowser: !options.browser,
+      simulation: options.simulation
+    });
+  });
+
+/**
  * Calendar commands group
  */
 const calendar = program
@@ -580,6 +599,75 @@ calendar
     } catch (error) {
       spinner.fail('Logout failed');
       console.error(chalk.red('\nError:'), (error as Error).message);
+      process.exit(1);
+    }
+  });
+
+/**
+ * Export calendar to iCal format
+ */
+calendar
+  .command('export <output-file>')
+  .description('Export sessions to iCal format (.ics) for iPhone, Apple Calendar, etc.')
+  .action(async (outputFile) => {
+    const spinner = ora('Exporting to iCal format...').start();
+
+    try {
+      const calendarService = new CalendarService();
+      await calendarService.initialize();
+
+      spinner.text = 'Fetching sessions...';
+      await calendarService.exportToIcal(outputFile);
+
+      spinner.succeed(`Exported to ${outputFile}`);
+
+      console.log(chalk.bold('\n📱 Next Steps:\n'));
+      console.log(chalk.gray('  Mac:     ') + chalk.cyan(`open ${outputFile}`));
+      console.log(chalk.gray('  iPhone:  ') + chalk.cyan('AirDrop the file or email to yourself'));
+      console.log(chalk.gray('  Import:  ') + chalk.cyan('Tap the file to add to Calendar app'));
+      console.log('');
+
+    } catch (error) {
+      spinner.fail('Export failed');
+      console.error(chalk.red('\nError:'), (error as Error).message);
+      process.exit(1);
+    }
+  });
+
+/**
+ * Serve mobile-friendly calendar view
+ */
+calendar
+  .command('serve')
+  .description('Start mobile-friendly calendar server')
+  .option('-p, --port <port>', 'Server port', '8080')
+  .action(async (options) => {
+    console.log(chalk.bold.cyan('\n📱 Starting mobile calendar server...\n'));
+
+    try {
+      const port = parseInt(options.port);
+      const server = new CalendarServer(port);
+
+      await server.start();
+
+      // Handle shutdown gracefully
+      process.on('SIGINT', async () => {
+        console.log('\n\n  Shutting down...');
+        await server.stop();
+        process.exit(0);
+      });
+
+      // Keep process alive
+      await new Promise(() => {});
+
+    } catch (error) {
+      console.error(chalk.red('\nError:'), (error as Error).message);
+
+      if ((error as any).code === 'EADDRINUSE') {
+        console.log(chalk.yellow('\nPort is already in use. Try:'));
+        console.log(chalk.cyan(`  claude-optimizer calendar serve --port 8081`));
+      }
+
       process.exit(1);
     }
   });

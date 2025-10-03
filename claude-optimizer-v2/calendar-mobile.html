@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Claude Sessions Calendar</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .header h1 {
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .header .emoji {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      opacity: 0.8;
+      font-size: 14px;
+    }
+
+    .refresh-btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 25px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 10px auto;
+      display: block;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    .refresh-btn:active {
+      transform: scale(0.95);
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .sessions-container {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .session-card {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .session-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .session-icon {
+      font-size: 32px;
+      margin-right: 12px;
+    }
+
+    .session-title {
+      flex: 1;
+    }
+
+    .session-title h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .session-title .project {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+
+    .session-time {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .session-time .time-icon {
+      font-size: 16px;
+    }
+
+    .session-details {
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .detail-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+    }
+
+    .detail-row .label {
+      opacity: 0.8;
+      margin-right: 8px;
+      min-width: 80px;
+    }
+
+    .detail-row .value {
+      font-weight: 500;
+    }
+
+    .objectives {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .objectives h4 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      opacity: 0.8;
+    }
+
+    .objective {
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      margin-bottom: 6px;
+      font-size: 13px;
+      display: flex;
+      align-items: start;
+      gap: 8px;
+    }
+
+    .objective::before {
+      content: "✓";
+      opacity: 0.6;
+      flex-shrink: 0;
+    }
+
+    .countdown {
+      text-align: center;
+      font-size: 16px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      margin-top: 10px;
+      font-weight: 600;
+    }
+
+    .countdown.soon {
+      background: rgba(255, 193, 7, 0.3);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .empty-state .emoji {
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+
+    .empty-state h2 {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+
+    .empty-state p {
+      opacity: 0.8;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .error-state {
+      background: rgba(244, 67, 54, 0.2);
+      border: 1px solid rgba(244, 67, 54, 0.4);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      font-size: 18px;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 15px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      opacity: 0.6;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="emoji">🤖</div>
+    <h1>Claude Sessions</h1>
+    <p>Your scheduled coding sessions</p>
+  </div>
+
+  <button class="refresh-btn" onclick="loadSessions()">🔄 Refresh</button>
+
+  <div id="content" class="sessions-container">
+    <div class="loading">
+      <div class="spinner"></div>
+      <div>Loading sessions...</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Claude Code Optimizer • Mobile View
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3001'; // WebSocket server port
+
+    function formatTime(date) {
+      return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+    }
+
+    function formatDate(date) {
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      if (date.toDateString() === today.toDateString()) {
+        return 'Today';
+      } else if (date.toDateString() === tomorrow.toDateString()) {
+        return 'Tomorrow';
+      } else {
+        return date.toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric'
+        });
+      }
+    }
+
+    function getCountdown(startTime) {
+      const now = new Date();
+      const start = new Date(startTime);
+      const diff = start - now;
+
+      if (diff < 0) {
+        return 'In progress';
+      }
+
+      const minutes = Math.floor(diff / 1000 / 60);
+      const hours = Math.floor(minutes / 60);
+      const days = Math.floor(hours / 24);
+
+      if (days > 0) {
+        return `Starts in ${days} day${days > 1 ? 's' : ''}`;
+      } else if (hours > 0) {
+        return `Starts in ${hours} hour${hours > 1 ? 's' : ''}`;
+      } else if (minutes > 0) {
+        return `Starts in ${minutes} minute${minutes > 1 ? 's' : ''}`;
+      } else {
+        return 'Starting now!';
+      }
+    }
+
+    function renderSession(session) {
+      const start = new Date(session.start);
+      const end = new Date(session.end);
+      const countdown = getCountdown(start);
+      const isSoon = (start - new Date()) < 1800000; // 30 minutes
+
+      return `
+        <div class="session-card">
+          <div class="session-header">
+            <div class="session-icon">🎯</div>
+            <div class="session-title">
+              <h3>${session.sessionConfig.phase}</h3>
+              <div class="project">${session.sessionConfig.projectName}</div>
+            </div>
+          </div>
+
+          <div class="session-time">
+            <span class="time-icon">📅</span>
+            <span>${formatDate(start)} at ${formatTime(start)} - ${formatTime(end)}</span>
+          </div>
+
+          <div class="countdown ${isSoon ? 'soon' : ''}">
+            ${countdown}
+          </div>
+
+          <div class="session-details">
+            <div class="detail-row">
+              <span class="label">Model:</span>
+              <span class="value">${session.sessionConfig.model}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Duration:</span>
+              <span class="value">${Math.round((end - start) / 1000 / 60 / 60 * 10) / 10}h</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Budget:</span>
+              <span class="value">${session.sessionConfig.tokenBudget.toLocaleString()} tokens</span>
+            </div>
+          </div>
+
+          ${session.sessionConfig.objectives && session.sessionConfig.objectives.length > 0 ? `
+            <div class="objectives">
+              <h4>Session Objectives:</h4>
+              ${session.sessionConfig.objectives.map(obj => `
+                <div class="objective">${obj}</div>
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    async function loadSessions() {
+      const content = document.getElementById('content');
+      content.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <div>Loading sessions...</div>
+        </div>
+      `;
+
+      try {
+        // Try to fetch from a static JSON file (fallback)
+        // You would need to generate this file from your calendar service
+        const response = await fetch('/sessions.json');
+
+        if (!response.ok) {
+          throw new Error('Could not load sessions');
+        }
+
+        const sessions = await response.json();
+
+        if (sessions.length === 0) {
+          content.innerHTML = `
+            <div class="empty-state">
+              <div class="emoji">📅</div>
+              <h2>No Sessions Scheduled</h2>
+              <p>Run <code>claude-optimizer calendar schedule</code> on your computer to create sessions.</p>
+            </div>
+          `;
+          return;
+        }
+
+        // Sort sessions by start time
+        sessions.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+        content.innerHTML = sessions.map(renderSession).join('');
+
+        // Update countdowns every minute
+        setInterval(() => {
+          loadSessions();
+        }, 60000);
+
+      } catch (error) {
+        content.innerHTML = `
+          <div class="error-state">
+            <h3>❌ Could not load sessions</h3>
+            <p style="margin-top: 10px;">${error.message}</p>
+            <p style="margin-top: 15px; font-size: 14px; opacity: 0.8;">
+              Make sure your computer is on the same network and the calendar service is running.
+            </p>
+          </div>
+          <div class="empty-state">
+            <h2>Alternative Options</h2>
+            <p>
+              • Use Google Calendar app on your phone<br>
+              • Import the .ics file to Apple Calendar<br>
+              • Run the calendar watcher on your laptop
+            </p>
+          </div>
+        `;
+      }
+    }
+
+    // Load sessions on page load
+    loadSessions();
+  </script>
+</body>
+</html>

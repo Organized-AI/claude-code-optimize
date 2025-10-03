@@ -374,4 +374,118 @@ The session will start automatically at the scheduled time.
   async logout(): Promise<void> {
     await this.oauthHelper.clearToken();
   }
+
+  /**
+   * Export sessions to iCal format (.ics file)
+   * For use with Apple Calendar, iPhone, Google Calendar, etc.
+   */
+  async exportToIcal(outputPath: string): Promise<void> {
+    await this.initialize();
+
+    const sessions = await this.listUpcomingSessions();
+
+    if (sessions.length === 0) {
+      throw new Error('No upcoming sessions to export');
+    }
+
+    // Build iCal format
+    const icalLines: string[] = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Claude Code Optimizer//Calendar Integration//EN',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'X-WR-CALNAME:Claude Code Sessions',
+      'X-WR-TIMEZONE:UTC',
+      'X-WR-CALDESC:Automated Claude Code Optimizer Sessions'
+    ];
+
+    for (const session of sessions) {
+      icalLines.push('BEGIN:VEVENT');
+      icalLines.push(`UID:${session.id}@claude-optimizer`);
+      icalLines.push(`DTSTAMP:${this.formatIcalDate(new Date())}`);
+      icalLines.push(`DTSTART:${this.formatIcalDate(session.start)}`);
+      icalLines.push(`DTEND:${this.formatIcalDate(session.end)}`);
+      icalLines.push(`SUMMARY:${this.escapeIcalText(session.summary || 'Claude Session')}`);
+
+      // Add description with session details
+      const description = this.formatIcalDescription(session);
+      icalLines.push(`DESCRIPTION:${this.escapeIcalText(description)}`);
+
+      // Add location (project path)
+      icalLines.push(`LOCATION:${this.escapeIcalText(session.sessionConfig.projectPath)}`);
+
+      // Add reminders (VALARM)
+      icalLines.push('BEGIN:VALARM');
+      icalLines.push('TRIGGER:-PT30M');
+      icalLines.push('ACTION:DISPLAY');
+      icalLines.push('DESCRIPTION:Claude session starting in 30 minutes');
+      icalLines.push('END:VALARM');
+
+      icalLines.push('BEGIN:VALARM');
+      icalLines.push('TRIGGER:-PT5M');
+      icalLines.push('ACTION:DISPLAY');
+      icalLines.push('DESCRIPTION:Claude session starting in 5 minutes');
+      icalLines.push('END:VALARM');
+
+      // Add categories
+      icalLines.push('CATEGORIES:Claude Code,Development,AI');
+
+      // Add color (blue)
+      icalLines.push('COLOR:blue');
+
+      icalLines.push('END:VEVENT');
+    }
+
+    icalLines.push('END:VCALENDAR');
+
+    // Write to file
+    const fs = await import('fs/promises');
+    await fs.writeFile(outputPath, icalLines.join('\r\n'), 'utf-8');
+  }
+
+  /**
+   * Format date for iCal (UTC format: YYYYMMDDTHHmmssZ)
+   */
+  private formatIcalDate(date: Date): string {
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const hours = String(date.getUTCHours()).padStart(2, '0');
+    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+    return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
+  }
+
+  /**
+   * Escape special characters for iCal text fields
+   */
+  private escapeIcalText(text: string): string {
+    return text
+      .replace(/\\/g, '\\\\')
+      .replace(/;/g, '\\;')
+      .replace(/,/g, '\\,')
+      .replace(/\n/g, '\\n')
+      .replace(/\r/g, '');
+  }
+
+  /**
+   * Format session description for iCal
+   */
+  private formatIcalDescription(session: CalendarEvent): string {
+    const lines = [
+      '🤖 Claude Code Optimizer Session',
+      '',
+      `Project: ${session.sessionConfig.projectName}`,
+      `Phase: ${session.sessionConfig.phase}`,
+      `Model: ${session.sessionConfig.model}`,
+      `Token Budget: ${session.sessionConfig.tokenBudget.toLocaleString()}`,
+      '',
+      'Objectives:',
+      ...session.sessionConfig.objectives.map((obj, i) => `${i + 1}. ${obj}`),
+      '',
+      'This session will start automatically if you have the calendar watcher running.'
+    ];
+    return lines.join('\\n');
+  }
 }
