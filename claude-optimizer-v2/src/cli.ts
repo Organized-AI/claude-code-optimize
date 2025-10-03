@@ -418,6 +418,55 @@ program
   });
 
 /**
+ * Session management commands
+ */
+const session = program
+  .command('session')
+  .description('Manage Claude Code sessions from SESSION plans');
+
+session
+  .command('start <plan>')
+  .description('Start Claude Code session from SESSION_X_PLAN.md')
+  .action(async (planIdentifier) => {
+    const { sessionStart } = await import('./commands/session-start.js');
+    await sessionStart(planIdentifier);
+  });
+
+session
+  .command('list')
+  .description('List available SESSION plans')
+  .action(async () => {
+    const { SessionPlanParser } = await import('./session-plan-parser.js');
+    const parser = new SessionPlanParser();
+    const plans = await parser.listPlans();
+
+    if (plans.length === 0) {
+      console.log(chalk.yellow('\nNo SESSION plans found in docs/planning/\n'));
+      return;
+    }
+
+    console.log(chalk.bold.cyan('\n📋 Available SESSION Plans\n'));
+    console.log(chalk.gray('─'.repeat(60)));
+
+    for (const planFile of plans) {
+      const planPath = await parser.findPlan(planFile);
+      const plan = await parser.parsePlan(planPath);
+
+      console.log('');
+      console.log(chalk.cyan(planFile.replace('.md', '')));
+      console.log(chalk.gray(`  ${plan.title}`));
+      console.log(chalk.gray(`  Status: ${plan.status} | Time: ${plan.estimatedTime}`));
+      console.log(chalk.gray(`  Tokens: ${plan.estimatedTokens}`));
+    }
+
+    console.log('');
+    console.log(chalk.gray('─'.repeat(60)));
+    console.log(chalk.gray('Start a session: ') + chalk.cyan('node dist/cli.js session start <plan>'));
+    console.log(chalk.gray('Example:         ') + chalk.cyan('node dist/cli.js session start 10'));
+    console.log('');
+  });
+
+/**
  * Calendar commands group
  */
 const calendar = program

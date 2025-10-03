@@ -74,6 +74,9 @@ async function launchLiveDashboard() {
     const currentSession = parser.getCurrentSession();
     const sessionId = currentSession?.sessionId || getCurrentSessionId();
 
+    // Get actual Claude process PID
+    const claudePid = await getClaudePid();
+
     // Send session metadata with real data
     if (currentSession) {
       wsServer.broadcast({
@@ -81,7 +84,7 @@ async function launchLiveDashboard() {
         data: {
           messageType: 'session-metadata',
           sessionId: currentSession.sessionId,
-          pid: process.pid,
+          pid: claudePid,
           projectName: currentSession.projectName,
           startTime: currentSession.startTime.toISOString()
         },

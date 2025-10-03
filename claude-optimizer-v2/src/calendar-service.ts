@@ -470,22 +470,65 @@ The session will start automatically at the scheduled time.
   }
 
   /**
-   * Format session description for iCal
+   * Format session description for iCal with actionable commands
    */
   private formatIcalDescription(session: CalendarEvent): string {
+    // Extract SESSION plan name from phase if available
+    const planMatch = session.sessionConfig.phase.match(/SESSION[_ ](\d+[A-Z]?)/i);
+    const planName = planMatch ? planMatch[1] : null;
+
+    const projectPath = session.sessionConfig.projectPath;
+    const encodedPath = encodeURIComponent(projectPath);
+
     const lines = [
-      '🤖 Claude Code Optimizer Session',
-      '',
-      `Project: ${session.sessionConfig.projectName}`,
-      `Phase: ${session.sessionConfig.phase}`,
-      `Model: ${session.sessionConfig.model}`,
-      `Token Budget: ${session.sessionConfig.tokenBudget.toLocaleString()}`,
-      '',
-      'Objectives:',
-      ...session.sessionConfig.objectives.map((obj, i) => `${i + 1}. ${obj}`),
-      '',
-      'This session will start automatically if you have the calendar watcher running.'
+      '🚀 QUICK START',
+      '═══════════════════════════════════════',
+      ''
     ];
+
+    // Add URL scheme for Mac (if plan name detected)
+    if (planName) {
+      lines.push('🖥️  Mac (One-Click):');
+      lines.push(`   claude-session://start?plan=${planName}&project=${encodedPath}`);
+      lines.push('');
+    }
+
+    // Add manual command for all platforms
+    lines.push('💻 Manual Command:');
+    lines.push(`   cd ${projectPath}`);
+    if (planName) {
+      lines.push(`   node dist/cli.js session start ${planName}`);
+    } else {
+      lines.push('   # Start Claude Code session manually');
+    }
+    lines.push('');
+
+    // Add session details
+    lines.push('📋 SESSION DETAILS');
+    lines.push('═══════════════════════════════════════');
+    lines.push('');
+    lines.push(`Project: ${session.sessionConfig.projectName}`);
+    lines.push(`Phase: ${session.sessionConfig.phase}`);
+    lines.push(`Model: ${session.sessionConfig.model}`);
+    lines.push(`Token Budget: ${session.sessionConfig.tokenBudget.toLocaleString()}`);
+    lines.push('');
+
+    // Add objectives
+    if (session.sessionConfig.objectives.length > 0) {
+      lines.push('🎯 Objectives:');
+      session.sessionConfig.objectives.forEach((obj, i) => {
+        lines.push(`   ${i + 1}. ${obj}`);
+      });
+      lines.push('');
+    }
+
+    // Add automation note
+    lines.push('═══════════════════════════════════════');
+    lines.push('');
+    lines.push('📱 iPhone: Copy the manual command above');
+    lines.push('🖥️  Mac: Click the URL or use calendar watcher');
+    lines.push('🤖 Auto: Run "calendar watch" to auto-start');
+
     return lines.join('\\n');
   }
 }

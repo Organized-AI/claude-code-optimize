@@ -870,15 +870,180 @@
       socket.on('session:message', (msg) => {
         console.log('Message received:', msg);
 
-        if (msg.data) {
-          if (msg.data.inputTokens !== undefined || msg.data.outputTokens !== undefined) {
+        if (!msg.data || !msg.data.messageType) return;
+
+        // Route based on message type
+        switch (msg.data.messageType) {
+          case 'token-breakdown':
+            // Update token metrics with REAL data (using correct IDs)
+            document.getElementById('token-input').textContent = formatNumber(msg.data.inputTokens);
+            document.getElementById('token-output').textContent = formatNumber(msg.data.outputTokens);
+            document.getElementById('token-cache').textContent = formatNumber(msg.data.cacheTokens);
+            document.getElementById('token-efficiency').textContent = msg.data.efficiency + '%';
+            document.getElementById('token-rate').textContent = formatNumber(msg.data.rate) + '/min';
+
+            // Update 5-hour block budget (using correct IDs)
+            if (msg.data.totalTokens) {
+              const blockLimit = 750000;
+              const blockUsed = msg.data.totalTokens - (msg.data.cacheTokens || 0); // Cache reads are free
+              const blockPercent = Math.round((blockUsed / blockLimit) * 100);
+
+              document.getElementById('block-used').textContent = formatNumber(blockUsed);
+              document.getElementById('block-limit').textContent = formatNumber(blockLimit);
+              document.getElementById('cache-free').textContent = formatNumber(msg.data.cacheTokens);
+
+              // Update progress bar
+              const progressBar = document.getElementById('block-progress');
+              if (progressBar) {
+                progressBar.style.width = Math.min(blockPercent, 100) + '%';
+              }
+            }
+            break;
+
+          case 'session-metadata':
+            // Update session metadata
+            document.getElementById('banner-session-id').textContent = msg.data.sessionId.substring(0, 8);
+            document.getElementById('session-pid').textContent = msg.data.pid;
+            document.getElementById('session-id').textContent = msg.data.sessionId.substring(0, 8) + '...';
+            if (msg.data.projectName) {
+              document.getElementById('banner-project').textContent = msg.data.projectName;
+            }
+            break;
+
+          case 'session-analytics':
+            // Update history tab analytics
+            document.getElementById('total-sessions').textContent = msg.data.totalSessions;
+            document.getElementById('total-tokens').textContent = formatNumber(msg.data.totalTokens);
+            document.getElementById('avg-session-time').textContent = msg.data.avgSessionTime + 'm';
+            document.getElementById('avg-efficiency').textContent = msg.data.avgEfficiency + '%';
+            if (msg.data.totalCost) {
+              document.getElementById('total-cost').textContent = '$' + msg.data.totalCost.toFixed(2);
+            }
+            break;
+
+          case 'weekly-quota':
+            // Update weekly quota display
+            document.getElementById('sonnet-hours-used').textContent = msg.data.sonnet.used + 'h';
+            document.getElementById('sonnet-hours-total').textContent = msg.data.sonnet.limit + 'h';
+            document.getElementById('opus-hours-used').textContent = msg.data.opus.used + 'h';
+            document.getElementById('opus-hours-total').textContent = msg.data.opus.limit + 'h';
+            document.getElementById('sessions-remaining').textContent = msg.data.sessionsRemaining;
+
+            // Update progress bars
+            const sonnetPercent = Math.round((msg.data.sonnet.used / msg.data.sonnet.limit) * 100);
+            const opusPercent = Math.round((msg.data.opus.used / msg.data.opus.limit) * 100);
+
+            const sonnetBar = document.querySelector('#sonnet-progress');
+            if (sonnetBar) sonnetBar.style.width = sonnetPercent + '%';
+
+            const opusBar = document.querySelector('#opus-progress');
+            if (opusBar) opusBar.style.width = opusPercent + '%';
+            break;
+
+          case 'usage-trends':
+            // Update usage trends chart (7-day)
+            if (msg.data.trends && Array.isArray(msg.data.trends)) {
+              updateUsageTrendsChart(msg.data.trends);
+            }
+            break;
+
+          case 'project-phases':
+            // Update project phase progress bars
+            if (msg.data.architecture !== undefined) {
+              const archBar = document.querySelector('#architecture-progress');
+              if (archBar) archBar.style.width = msg.data.architecture + '%';
+            }
+            if (msg.data.implementation !== undefined) {
+              const implBar = document.querySelector('#implementation-progress');
+              if (implBar) implBar.style.width = msg.data.implementation + '%';
+            }
+            if (msg.data.testing !== undefined) {
+              const testBar = document.querySelector('#testing-progress');
+              if (testBar) testBar.style.width = msg.data.testing + '%';
+            }
+            break;
+
+          case 'session-history':
+            // Update session history list
+            if (msg.data.sessions && Array.isArray(msg.data.sessions)) {
+              updateSessionHistoryList(msg.data.sessions);
+            }
+            break;
+
+          case 'quota:update':
+            // Update quota from QuotaTracker
             updateTokenMetrics(msg.data);
-          }
-          if (msg.data.sessionId || msg.data.project) {
-            updateLiveSessionCard(msg.data);
-          }
+            break;
+
+          case 'context:update':
+            // Update context from ContextTracker
+            updateTokenMetrics(msg.data);
+            break;
+
+          default:
+            console.log('Unknown message type:', msg.data.messageType);
         }
       });
+
+      // Helper function to update usage trends chart
+      function updateUsageTrendsChart(trends) {
+        const chartContainer = document.getElementById('usage-chart');
+        if (!chartContainer) return;
+
+        // Clear existing chart
+        chartContainer.innerHTML = '';
+
+        // Find max value for scaling
+        const maxTokens = Math.max(...trends.map(t => t.tokens));
+
+        // Create bars
+        trends.forEach(trend => {
+          const barHeight = maxTokens > 0 ? (trend.tokens / maxTokens) * 100 : 0;
+          const bar = document.createElement('div');
+          bar.className = 'flex flex-col items-center';
+          bar.innerHTML = `
+            <div class="h-32 w-12 bg-dark-700 rounded flex items-end">
+              <div class="w-full bg-gradient-to-t from-moonlock-500 to-moonlock-400 rounded"
+                   style="height: ${barHeight}%"></div>
+            </div>
+            <span class="text-xs text-gray-400 mt-1">${trend.formattedDate}</span>
+          `;
+          chartContainer.appendChild(bar);
+        });
+      }
+
+      // Helper function to update session history list
+      function updateSessionHistoryList(sessions) {
+        const listContainer = document.getElementById('session-history-list');
+        if (!listContainer) return;
+
+        // Clear existing list
+        listContainer.innerHTML = '';
+
+        sessions.forEach(session => {
+          const sessionItem = document.createElement('div');
+          sessionItem.className = 'bg-dark-700 p-4 rounded border border-dark-600 hover:border-moonlock-500 transition-all';
+
+          const statusColor = session.status === 'success' ? 'green' :
+                             session.status === 'warning' ? 'yellow' : 'red';
+
+          sessionItem.innerHTML = `
+            <div class="flex justify-between items-center">
+              <div>
+                <span class="text-moonlock-400 font-mono">${session.id}</span>
+                <span class="text-gray-400 ml-4">${session.time}</span>
+              </div>
+              <div class="flex gap-4 text-sm">
+                <span class="text-gray-400">${session.duration}</span>
+                <span class="text-moonlock-300">${session.tokens}</span>
+                <span class="text-${statusColor}-400">${session.efficiency}</span>
+                <span class="text-gray-400">${session.cost}</span>
+              </div>
+            </div>
+          `;
+          listContainer.appendChild(sessionItem);
+        });
+      }
 
       socket.on('error', (error) => {
         console.error('Socket error:', error);

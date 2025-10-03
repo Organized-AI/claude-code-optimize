@@ -305,4 +305,139 @@ export class SessionPlanParser {
 
     return 'implementation';
   }
+
+  /**
+   * Find SESSION plan file by name or number
+   * @param identifier - e.g., "SESSION_10_PLAN", "10", or "SESSION_10"
+   */
+  async findPlan(identifier: string): Promise<string> {
+    const planDir = path.join(process.cwd(), 'docs', 'planning');
+
+    // Normalize identifier to plan file name
+    const planFile = this.normalizePlanName(identifier);
+    const planPath = path.join(planDir, planFile);
+
+    if (!fs.existsSync(planPath)) {
+      throw new Error(
+        `Session plan not found: ${planFile}\n` +
+        `Searched in: ${planDir}\n` +
+        `Try: SESSION_10_PLAN, 10, or check docs/planning/`
+      );
+    }
+
+    return planPath;
+  }
+
+  /**
+   * Parse SESSION plan file (async wrapper for parseFile)
+   */
+  async parsePlan(planPath: string): Promise<SessionPlan> {
+    return this.parseFile(planPath);
+  }
+
+  /**
+   * Build Claude Code prompt from session plan
+   */
+  buildPrompt(plan: SessionPlan): string {
+    const lines: string[] = [
+      `# ${plan.title}`,
+      ''
+    ];
+
+    if (plan.status) {
+      lines.push(`**Status**: ${plan.status}`);
+    }
+    if (plan.estimatedTime) {
+      lines.push(`**Estimated Time**: ${plan.estimatedTime}`);
+    }
+    if (plan.estimatedTokens) {
+      lines.push(`**Token Budget**: ${plan.estimatedTokens}`);
+    }
+    lines.push('');
+
+    if (plan.prerequisites.length > 0) {
+      lines.push('## Prerequisites');
+      plan.prerequisites.forEach(prereq => {
+        lines.push(`- ${prereq}`);
+      });
+      lines.push('');
+    }
+
+    if (plan.objectives.length > 0) {
+      lines.push('## Session Objectives');
+      plan.objectives.forEach((obj, i) => {
+        lines.push(`${i + 1}. ${obj}`);
+      });
+      lines.push('');
+    }
+
+    if (plan.phases.length > 0) {
+      lines.push('## Phases');
+      plan.phases.forEach(phase => {
+        lines.push(`### Phase ${phase.number}: ${phase.name}`);
+        if (phase.description) {
+          lines.push(phase.description);
+          lines.push('');
+        }
+        if (phase.objectives.length > 0) {
+          lines.push('**Objectives**:');
+          phase.objectives.forEach(obj => {
+            lines.push(`- ${obj}`);
+          });
+          lines.push('');
+        }
+      });
+    }
+
+    lines.push('---');
+    lines.push('');
+    lines.push('**Instructions**: Follow the phases above to complete this session. Mark objectives complete as you finish them.');
+
+    return lines.join('\n');
+  }
+
+  /**
+   * List all available SESSION plans
+   */
+  async listPlans(): Promise<string[]> {
+    const planDir = path.join(process.cwd(), 'docs', 'planning');
+
+    if (!fs.existsSync(planDir)) {
+      return [];
+    }
+
+    const files = fs.readdirSync(planDir);
+    return files
+      .filter(f => f.match(/^SESSION_\d+[A-Z]?.*_PLAN\.md$/))
+      .sort();
+  }
+
+  /**
+   * Normalize plan name to filename
+   * "10" -> "SESSION_10_PLAN.md"
+   * "SESSION_10" -> "SESSION_10_PLAN.md"
+   * "SESSION_10_PLAN" -> "SESSION_10_PLAN.md"
+   */
+  private normalizePlanName(identifier: string): string {
+    // Remove .md extension if present
+    identifier = identifier.replace(/\.md$/, '');
+
+    // If just a number, add prefix and suffix
+    if (/^\d+[A-Z]?$/.test(identifier)) {
+      return `SESSION_${identifier}_PLAN.md`;
+    }
+
+    // If has SESSION_ prefix but no _PLAN suffix
+    if (identifier.startsWith('SESSION_') && !identifier.endsWith('_PLAN')) {
+      return `${identifier}_PLAN.md`;
+    }
+
+    // If already has both prefix and suffix
+    if (identifier.startsWith('SESSION_') && identifier.endsWith('_PLAN')) {
+      return `${identifier}.md`;
+    }
+
+    // Default: assume it's a complete name
+    return `${identifier}.md`;
+  }
 }
