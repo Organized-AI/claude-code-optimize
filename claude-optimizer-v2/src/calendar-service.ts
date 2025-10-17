@@ -6,6 +6,7 @@
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 import { OAuthHelper } from './utils/oauth-helper.js';
+import { IcalValidator } from './ical-validator.js';
 import type {
   CalendarEvent,
   SchedulePreferences,
@@ -415,6 +416,10 @@ The session will start automatically at the scheduled time.
       // Add location (project path)
       icalLines.push(`LOCATION:${this.escapeIcalText(session.sessionConfig.projectPath)}`);
 
+      // Add URL for one-click session launch (iPhone-friendly)
+      const sessionUrl = this.generateSessionUrl(session);
+      icalLines.push(`URL:${sessionUrl}`);
+
       // Add reminders (VALARM)
       icalLines.push('BEGIN:VALARM');
       icalLines.push('TRIGGER:-PT30M');
@@ -441,7 +446,39 @@ The session will start automatically at the scheduled time.
 
     // Write to file
     const fs = await import('fs/promises');
-    await fs.writeFile(outputPath, icalLines.join('\r\n'), 'utf-8');
+    const icalContent = icalLines.join('\r\n');
+    await fs.writeFile(outputPath, icalContent, 'utf-8');
+
+    // Validate the generated iCal file
+    const validator = new IcalValidator();
+    const validation = validator.validateIcal(icalContent);
+
+    if (!validation.valid) {
+      console.warn('\n⚠️  Warning: Generated iCal file has validation issues:');
+      validation.errors.forEach(error => console.warn(`  - ${error}`));
+    }
+
+    if (validation.warnings.length > 0) {
+      console.warn('\n⚠️  iCal validation warnings:');
+      validation.warnings.forEach(warning => console.warn(`  - ${warning}`));
+    }
+  }
+
+  /**
+   * Validate an iCal file
+   */
+  validateIcalFile(content: string): boolean {
+    const validator = new IcalValidator();
+    const validation = validator.validateIcal(content);
+    return validation.valid;
+  }
+
+  /**
+   * Get iCal validation report
+   */
+  getIcalValidationReport(content: string): string {
+    const validator = new IcalValidator();
+    return validator.generateReport(content);
   }
 
   /**
@@ -467,6 +504,48 @@ The session will start automatically at the scheduled time.
       .replace(/,/g, '\\,')
       .replace(/\n/g, '\\n')
       .replace(/\r/g, '');
+  }
+
+  /**
+   * Fold long iCal lines to comply with RFC 5545 (max 75 chars per line)
+   */
+  // @ts-ignore - TODO: Will be used when implementing line folding
+  private foldIcalLine(line: string): string {
+    // TODO(human): Implement line folding for iCal compliance
+    // RFC 5545 requires lines to be max 75 characters (including CRLF)
+    // Lines exceeding this must be folded by inserting CRLF + space
+    // Example: "DESCRIPTION:very long text..." becomes:
+    // "DESCRIPTION:very long te\r\n xt..."
+    //
+    // Requirements:
+    // 1. If line.length <= 75, return line unchanged
+    // 2. Otherwise, split at 75 chars and insert '\r\n ' (CRLF + space)
+    // 3. Continue folding remaining text in 74-char chunks (accounting for leading space)
+    // 4. Return the folded line
+    return line;
+  }
+
+  /**
+   * Generate session launch URL for calendar events
+   * Creates a custom URL scheme that can be registered to launch Claude Code
+   */
+  private generateSessionUrl(session: CalendarEvent): string {
+    // Extract session plan name from phase if available
+    const planMatch = session.sessionConfig.phase.match(/SESSION[_ ](\d+[A-Z]?)/i);
+    const planName = planMatch ? planMatch[1] : null;
+
+    const projectPath = session.sessionConfig.projectPath;
+    const encodedPath = encodeURIComponent(projectPath);
+    const encodedPhase = encodeURIComponent(session.sessionConfig.phase);
+
+    // Create custom URL scheme
+    if (planName) {
+      // claude-session://start?plan=11&project=/path/to/project
+      return `claude-session://start?plan=${planName}&project=${encodedPath}`;
+    } else {
+      // claude-session://start?phase=Planning&project=/path/to/project
+      return `claude-session://start?phase=${encodedPhase}&project=${encodedPath}`;
+    }
   }
 
   /**

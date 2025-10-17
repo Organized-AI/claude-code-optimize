@@ -1,0 +1,31 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Claude Code Optimizer//Calendar Integration//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Claude Code Sessions
+X-WR-TIMEZONE:UTC
+X-WR-CALDESC:Automated Claude Code Optimizer Sessions
+BEGIN:VEVENT
+UID:im2n9p3roeamr44larj583vbso@claude-optimizer
+DTSTAMP:20251003T221820Z
+DTSTART:20251006T140000Z
+DTEND:20251006T180000Z
+SUMMARY:🤖 Claude Session: Testing & Integration
+DESCRIPTION:🚀 QUICK START\\n═══════════════════════════════════════\\n\\n💻 Manual Command:\\n   cd /Users/jordaaan/Library/Mobile Documents/com~apple~CloudDocs/BHT Promo iCloud/Organized AI/Windsurf/Claude Code Optimizer/claude-optimizer-v2\\n   # Start Claude Code session manually\\n\\n📋 SESSION DETAILS\\n═══════════════════════════════════════\\n\\nProject: claude-optimizer-v2\\nPhase: Testing & Integration\\nModel: sonnet\\nToken Budget: 60\,000\\n\\n🎯 Objectives:\\n   1. Write comprehensive test coverage\\n   2. Fix identified bugs and issues\\n   3. Verify all components integrate properly\\n   4. Perform integration testing\\n\\n═══════════════════════════════════════\\n\\n📱 iPhone: Copy the manual command above\\n🖥️  Mac: Click the URL or use calendar watcher\\n🤖 Auto: Run "calendar watch" to auto-start
+LOCATION:/Users/jordaaan/Library/Mobile Documents/com~apple~CloudDocs/BHT Promo iCloud/Organized AI/Windsurf/Claude Code Optimizer/claude-optimizer-v2
+URL:claude-session://start?phase=Testing%20%26%20Integration&project=%2FUsers%2Fjordaaan%2FLibrary%2FMobile%20Documents%2Fcom~apple~CloudDocs%2FBHT%20Promo%20iCloud%2FOrganized%20AI%2FWindsurf%2FClaude%20Code%20Optimizer%2Fclaude-optimizer-v2
+BEGIN:VALARM
+TRIGGER:-PT30M
+ACTION:DISPLAY
+DESCRIPTION:Claude session starting in 30 minutes
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT5M
+ACTION:DISPLAY
+DESCRIPTION:Claude session starting in 5 minutes
+END:VALARM
+CATEGORIES:Claude Code,Development,AI
+COLOR:blue
+END:VEVENT
+END:VCALENDAR

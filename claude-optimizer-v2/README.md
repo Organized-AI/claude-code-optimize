@@ -29,6 +29,10 @@ Claude Code Optimizer automatically analyzes your codebase complexity and genera
 - 🎨 **Moonlock Design**: Beautiful, production-ready dashboard UI
 - 📉 **Session History**: Complete analytics from JSONL session files
 - 💰 **Cost Tracking**: Real-time token usage and cost calculations
+- 🔗 **URL Handler**: One-click session launch from calendar (Mac)
+- 🔐 **Security First**: Command injection prevention, input validation
+- 📱 **iPhone Workflow**: Manual copy-paste workflow with calendar integration
+- ✅ **QA Framework**: 35 manual + 17 automated tests for reliability
 
 ## 🚀 Quick Start
 
@@ -40,6 +44,20 @@ npm install
 npm run build
 ```
 
+### One-Click Session Launch (Mac Only)
+
+```bash
+# Install URL handler (one-time setup)
+./scripts/install-url-handler.sh
+
+# Test it works
+open "claude-session://start?plan=SESSION_11_PLAN_REVISED"
+
+# Calendar URLs now open Terminal automatically!
+```
+
+See `docs/QUICK_START.md` for full setup guide.
+
 ### Usage
 
 ```bash
@@ -48,6 +66,10 @@ node dist/cli.js analyze ./my-project
 node dist/cli.js list
 node dist/cli.js show ./my-project
 node dist/cli.js delete ./my-project
+
+# Session Management
+node dist/cli.js session start <plan_number>
+node dist/cli.js calendar export sessions.ics
 
 # Session Management
 node dist/cli.js status                    # Show quota and context status

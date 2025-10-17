@@ -7,6 +7,9 @@ import { Server, Socket } from 'socket.io';
 import { createServer, Server as HTTPServer } from 'http';
 import express, { Application } from 'express';
 import cors from 'cors';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 export interface SessionEvent {
   type: 'session:start' | 'session:objective' | 'session:tokens' | 'session:tool' | 'session:complete' | 'session:error' | 'session:message';
@@ -34,6 +37,35 @@ export class WebSocketServer {
         clients: this.connectedClients.size,
         timestamp: new Date()
       });
+    });
+
+    // Calendar download endpoint
+    this.app.get('/api/calendar/download', (_req, res) => {
+      try {
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = path.dirname(__filename);
+        const icalPath = path.join(__dirname, '..', 'my-sessions.ics');
+
+        // Check if file exists
+        if (!fs.existsSync(icalPath)) {
+          res.status(404).json({ error: 'Calendar file not found' });
+          return;
+        }
+
+        // Read the iCal file
+        const icalContent = fs.readFileSync(icalPath, 'utf-8');
+
+        // Set appropriate headers
+        res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+        res.setHeader('Content-Disposition', 'attachment; filename="claude-sessions.ics"');
+
+        // Send the file
+        res.send(icalContent);
+        console.log('✅ Calendar downloaded by client');
+      } catch (error) {
+        console.error('❌ Error serving calendar:', error);
+        res.status(500).json({ error: 'Failed to serve calendar file' });
+      }
     });
 
     this.httpServer = createServer(this.app);

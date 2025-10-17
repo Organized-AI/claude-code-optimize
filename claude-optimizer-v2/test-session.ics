@@ -1,0 +1,30 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Claude Code Optimizer//Calendar Integration//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Claude Code Sessions
+X-WR-TIMEZONE:UTC
+X-WR-CALDESC:Automated Claude Code Optimizer Sessions
+BEGIN:VEVENT
+UID:test-session-10@claude-optimizer
+DTSTAMP:20251003T203523Z
+DTSTART:20251003T140000Z
+DTEND:20251003T170000Z
+SUMMARY:🤖 Claude Session: SESSION 10 - Real Data Integration
+DESCRIPTION:🚀 QUICK START\n═══════════════════════════════════════\n\n🖥️  Mac (One-Click):\n   claude-session://start?plan=10\n\n💻 Manual Command:\n   cd /path/to/project\n   node dist/cli.js session start 10\n\n📋 SESSION DETAILS\n═══════════════════════════════════════\n\nProject: Claude Code Optimizer\nPhase: SESSION 10\nModel: claude-sonnet-4\nToken Budget: 75\,000\n
+LOCATION:/Users/jordaaan/Claude-Optimizer
+BEGIN:VALARM
+TRIGGER:-PT30M
+ACTION:DISPLAY
+DESCRIPTION:Claude session starting in 30 minutes
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT5M
+ACTION:DISPLAY
+DESCRIPTION:Claude session starting in 5 minutes
+END:VALARM
+CATEGORIES:Claude Code,Development,AI
+COLOR:blue
+END:VEVENT
+END:VCALENDAR

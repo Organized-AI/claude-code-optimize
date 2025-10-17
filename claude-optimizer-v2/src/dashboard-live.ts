@@ -3,13 +3,30 @@ import { QuotaTracker } from './quota-tracker.js';
 import { ContextTracker } from './context-tracker.js';
 import { SessionJSONLParser } from './parsers/session-jsonl-parser.js';
 import { SessionHistoryService } from './services/session-history.js';
+import { jsonlUsageParser, JSONLUsageParser } from './jsonl-usage-parser.js';
 import open from 'open';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 
+const execAsync = promisify(exec);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+/**
+ * Get the actual Claude CLI process PID
+ */
+async function getClaudePid(): Promise<number> {
+  try {
+    const { stdout } = await execAsync('pgrep -f "^claude" | head -1');
+    const pid = parseInt(stdout.trim());
+    return isNaN(pid) ? process.pid : pid;
+  } catch {
+    return process.pid; // Fallback to dashboard server PID
+  }
+}
 
 /**
  * Detect current Claude Code session ID
@@ -114,7 +131,7 @@ async function launchLiveDashboard() {
         data: {
           messageType: 'session-metadata',
           sessionId: sessionId,
-          pid: process.pid,
+          pid: claudePid,
           projectName: 'Claude Code Optimizer',
           startTime: new Date().toISOString()
         },
@@ -182,6 +199,45 @@ async function launchLiveDashboard() {
       data: {
         messageType: 'usage-trends',
         trends: trends
+      },
+      timestamp: new Date()
+    });
+
+    // Send native Claude usage data (matches `/usage` command)
+    const usageSummary = jsonlUsageParser.getUsageSummary();
+
+    if (usageSummary.currentSession) {
+      wsServer.broadcast({
+        type: 'session:message',
+        data: {
+          messageType: 'claude-usage-current-session',
+          sessionId: usageSummary.currentSession.sessionId,
+          duration: usageSummary.currentSession.duration,
+          durationFormatted: JSONLUsageParser.formatDuration(usageSummary.currentSession.duration),
+          inputTokens: usageSummary.currentSession.inputTokens,
+          outputTokens: usageSummary.currentSession.outputTokens,
+          cacheCreationTokens: usageSummary.currentSession.cacheCreationTokens,
+          cacheReadTokens: usageSummary.currentSession.cacheReadTokens,
+          totalTokens: usageSummary.currentSession.totalTokens,
+          messageCount: usageSummary.currentSession.messageCount,
+          model: usageSummary.currentSession.model,
+          startTime: usageSummary.currentSession.startTime,
+          percentUsed: JSONLUsageParser.getBlockUsagePercent(usageSummary.currentSession.startTime),
+          resetTime: JSONLUsageParser.getBlockResetTime(usageSummary.currentSession.startTime)
+        },
+        timestamp: new Date()
+      });
+    }
+
+    wsServer.broadcast({
+      type: 'session:message',
+      data: {
+        messageType: 'claude-usage-weekly',
+        sonnet: usageSummary.currentWeek.sonnet,
+        opus: usageSummary.currentWeek.opus,
+        totalSessions: usageSummary.currentWeek.totalSessions,
+        weekStart: usageSummary.currentWeek.weekStart,
+        weekEnd: usageSummary.currentWeek.weekEnd
       },
       timestamp: new Date()
     });
