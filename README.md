@@ -272,3 +272,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Built to help developers work strategically within Claude Code's natural limits** 🚀
 
 *Remember: With 5-hour sessions and token quotas, precision beats speed. This tool ensures you maximize every token and never hit a wall.*
+
+---
+
+Maintained by Jordaaan Hill ([LinkedIn](https://www.linkedin.com/in/jordaaanhill)).
